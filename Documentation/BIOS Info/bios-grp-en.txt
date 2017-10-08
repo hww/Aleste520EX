@@ -1,0 +1,2093 @@
+;-------------------------------------------------------------------;
+;	“¿¡ÀÏ÷¿ œ¿–¿Ã≈“–Œ¬ ƒÀﬂ √–¿‘Ï Ï ÕÏ∆Õ≈√Œ ”–Œ¬Õﬂ               ;
+;-------------------------------------------------------------------;
+;
+GR		EQU	0FC00H
+;
+TAB_CONV_1	EQU	3CH	;Collor encode table for modes 1,2
+TAB_CONV_2	EQU	3DH	;Collor encode table for modes 3
+TAB_CONV_3	EQU	3EH	;Table
+TAB_CONV_4	EQU	3FH	;“able
+;
+_X1		EQU	GR+00	;word	X1 coordinate
+_Y1		EQU	GR+02	;word	Y1 coordinate
+_X2		EQU	GR+04	;word	X2 coordinate
+_Y2		EQU	GR+06	;word	Y2 coordinate
+;
+_DX		EQU	GR+08	;word   width on X
+_DY		EQU	GR+10	;word	height on Y
+;
+_SRC_PAGE	EQU	GR+12	;byte	page - source
+_DST_PAGE	EQU	GR+13	;byte	page - dest
+;
+_ARG		EQU	GR+14	;byte	bit 0 = 0 - _X1,_Y1 coordinate source
+				;		1 - _Y1 address source
+				;       bit 1 = 0 - _X2,_Y2 coordinate dest
+				;	        1 - _Y2 dest address
+				;	bit 2 = 0 - copy left to right
+				;		1 - copy right to left
+				;       bit 3 = 0 - copy up to down
+				;		1 - copy down to up
+;
+_WRT_MOD	EQU	GR+15	;byte	Write mode:
+				;		00 - Replace
+				;		01 - AND
+				;		02 - OR
+				;		03 - XOR
+				;		04 - Transparet
+				;		05 - AND
+				;		06 - OR
+				;		07 - XOR
+;
+_FG_COLOR	EQU	GR+16	;byte
+_BG_COLOR	EQU	GR+17	;byte
+;
+_LN_MASK	EQU	GR+18	;word	Line mask pattern
+;
+_PATPTR 	EQU	GR+20	;long	Pointer to the fill pattern
+_PATMSK 	EQU	GR+24	;word	Fill pattern mask
+;
+_CLIP		EQU	GR+26	;byte	Clipping flag:
+				;	00 - no clipping
+				;	not 00 - clipping
+_XMN_CLIP	EQU	GR+27	;word	Left
+_YMN_CLIP	EQU	GR+29	;word	Up	Define visible area
+_XMX_CLIP	EQU	GR+31	;word	Right	for the clipping
+_YMX_CLIP	EQU	GR+33	;word	Down
+;
+_SDBPTR		EQU	GR+35	;long   Pointer to the Sprite Definition Block
+_SPRBUF		EQU	GR+39	;long	Pointer to the Sprite buffer
+;
+;----------------------------------------------------------------------;
+;		PA¡Œ◊Ï≈ ﬂ◊≈… Ï                                         ;
+;----------------------------------------------------------------------;
+; VECTORS:
+;
+WR_PIX		EQU	GR+64		;DS	3	WR_PIX vector
+WR_LINE		EQU	GR+67		;DS	3	WR_LINE vector
+;
+GR_PAPER	EQU	GR+70		;byte
+GR_INK		EQU	GR+71		;byte	
+;
+; COMMON:
+;
+GR_BUFFER	EQU	BUFSYM2+16	;DS	16	Graphic buffer
+;
+; COPY:
+;
+GR_SRC_MASK	EQU	BUFSYM1+00	;byte	Mask
+GR_DST_MASK	EQU	BUFSYM1+01	;byte   Mask
+GR_SRC_ADR	EQU	BUFSYM1+02	;word	Adress
+GR_DST_ADR	EQU	BUFSYM1+04	;word	Adress
+;
+; LINE:
+;
+GR_B33A		EQU	BUFSYM1+00	;word
+GR_B33C		EQU	BUFSYM1+02	;word
+GR_B33E    	EQU	BUFSYM1+04	;word
+GR_B340		EQU	BUFSYM1+06	;word
+GR_B342		EQU	BUFSYM1+08	;word
+GR_B344		EQU	BUFSYM1+10	;word
+GR_B346		EQU	BUFSYM1+12	;byte
+;
+;--------------------  GRAPH_INIT  ------------------------------------;
+;
+GRAPH_INIT:	LD	HL,GR
+		LD	DE,GR+1
+		LD	BC,00DFH
+		LD	(HL),0
+		LDIR
+		LD	A,03
+		LD	(_FG_COLOR),A
+		XOR	A
+		CALL	SET_WRITE_MODE
+		JP	CLS
+;
+;--------------------  SET_WRITE_MODE  --------------------------------;
+;
+SET_WRITE_MODE:	AND	7	
+		LD	(_WRT_MOD),A
+		AND	3
+		ADD	A,A
+		LD	C,A
+		LD	B,0
+		LD	HL,TAB_WR_PIX
+		ADD	HL,BC
+	        LD      E,(HL)
+		INC	HL
+		LD	D,(HL)
+		LD	(WR_PIX+1),DE
+		LD	A,0C3H
+		LD	(WR_PIX),A
+		LD	A,(SCRMOD)
+		RLCA
+		RLCA
+		RLCA
+		AND     18H
+		LD	B,A
+		LD	A,(_WRT_MOD)
+		OR	B
+		ADD	A,A
+		LD	E,A
+		LD	D,0
+		LD	HL,TAB_WR_LINE
+		ADD	HL,DE
+		LD	E,(HL)
+		INC	HL
+		LD	D,(HL)
+		LD	(WR_LINE+1),DE
+		LD	A,0C3H
+		LD	(WR_LINE),A
+		RET
+;
+TAB_WR_PIX:	DW	WR_PIX_0
+		DW	WR_PIX_1
+		DW	WR_PIX_2
+		DW	WR_PIX_3
+;
+TAB_WR_LINE:	DW	WR_LINE_0_0,WR_LINE_0_1,WR_LINE_0_2,WR_LINE_0_3
+		DW	WR_LINE_0_4,WR_LINE_0_5,WR_LINE_0_6,WR_LINE_0_7
+		DW	WR_LINE_1_0,WR_LINE_1_1,WR_LINE_1_2,WR_LINE_1_3
+		DW	WR_LINE_1_4,WR_LINE_1_5,WR_LINE_1_6,WR_LINE_1_7
+		DW	WR_LINE_1_0,WR_LINE_1_1,WR_LINE_1_2,WR_LINE_1_3
+		DW	WR_LINE_1_4,WR_LINE_1_5,WR_LINE_1_6,WR_LINE_1_7
+		DW	WR_LINE_3_0,WR_LINE_3_1,WR_LINE_3_2,WR_LINE_3_3
+		DW	WR_LINE_3_4,WR_LINE_3_5,WR_LINE_3_6,WR_LINE_3_7
+;
+;--------------------  GET_WRITE_MODE  --------------------------------;
+;
+GET_WRITE_MODE:	LD	A,(_WRT_MOD)
+		RET
+;
+;--------------------  PUT_PIXEL  -------------------------------------;
+;
+;[DE]		Coordinate X
+;[HL]		Coordinate Y
+;[A]		Color (0-15)
+;_WRT_MOD	Write mode
+;_DST_PAGE	page of screen
+;
+PUT_PIXEL:	CALL	TRANS_COLOR
+		PUSH	AF
+		LD	A,(_DST_PAGE)
+		CALL	GR_GET_ADR
+		LD	E,C			; Mask
+		DI
+		LD	B,7DH
+		IN	C,(C)
+		OR	0C0H
+		OUT	(C),A
+		POP	AF
+		LD	D,A
+		CALL	WR_PIX
+		OUT	(C),C
+		EI
+		RET
+;
+TRANS_COLOR:	PUSH	HL
+		LD	L,A
+		LD	A,(SCRMOD)
+		AND	A
+		JR	Z,TRANS_COL_1
+		CP	3
+		JR	Z,TRANS_COL_2
+		LD	A,L
+		AND	3
+		LD	HL,COL_TAB_1
+		ADD	A,L
+		LD	L,A
+		JR	NC,TRANS_COL_3
+		INC	H
+TRANS_COL_3:	LD	A,(HL)
+		POP	HL
+		RET
+;
+TRANS_COL_1:	BIT	0,L
+		POP	HL
+		RET	Z
+		CPL
+		RET
+;
+TRANS_COL_2:	LD	A,L
+		AND	0FH
+		LD	HL,COL_TAB_2
+		ADD	A,L
+		LD	L,A
+		JR	NC,TRANS_COL_4
+		INC	H
+TRANS_COL_4:	LD	A,(HL)
+		POP	HL
+		RET
+;
+COL_TAB_1:	DB	000H,0F0H,00FH,0FFH
+COL_TAB_2:	DB	000H,0C0H,00CH,0CCH,030H,0F0H,03CH,0FCH
+		DB	003H,0C3H,00FH,0CFH,033H,0F3H,03FH,0FFH
+;
+;WR_PIX:	write byte to VRAM  [D]data, [E]=mask
+;
+WR_PIX_3:	LD	A,D			; XOR mode
+		AND	E
+		XOR	(HL)
+		LD	(HL),A
+		RET
+;
+WR_PIX_0:	LD	A,(HL)			; Normal mode
+		XOR	D
+		OR	E
+		XOR	E
+		XOR	D
+		LD	(HL),A
+		RET
+;
+WR_PIX_1:	LD	A,E			; AND mode
+	        CPL
+		OR	D
+		AND	(HL)
+		LD	(HL),A
+		RET
+;
+WR_PIX_2:	LD	A,D			; OR mode
+		AND	E
+		OR	(HL)
+		LD	(HL),A
+		RET
+;
+;GR_GET_ADR:	convert coordinates to address and mask
+;Inpu:		[HL]=Y, [DE] = X, [A] = Page
+;outpu:		[HL] = Addr, [A] = Page, [C] = Mask
+;
+GR_GET_ADR:	LD	B,A
+		LD	A,(SCRMOD)
+		AND	A
+		JR	Z,GET_ADR_0
+		DEC	A
+		JR	Z,GET_ADR_1
+		DEC	A
+		JP	Z,GET_ADR_2
+;
+GET_ADR_3:	LD	A,B
+		RLA
+		AND	1EH
+		LD	B,A
+		LD	A,L
+		AND	1
+		OR	B
+		PUSH	AF
+		LD	A,L
+		AND	6
+		RLCA
+		RLCA
+		RLCA
+		LD	C,A
+		LD	A,L
+		AND	0F8H
+		LD	L,A
+		LD	A,C
+		LD	B,H
+		LD	C,L
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,BC
+		ADD	HL,HL
+		ADD	HL,HL			; HL * 10
+		OR	H
+		LD	H,A
+		SRL	D
+		RR	E
+		LD	C,0AAH
+		JR	NC,GET_ADR_3_1
+		LD	C,55H
+GET_ADR_3_1:	ADD	HL,DE
+		SET	6,H
+		RES	7,H
+		POP	AF
+		RET
+;
+GET_ADR_0:	LD	A,B
+		PUSH	AF
+		LD	A,L
+		AND	7
+		RLCA
+		RLCA
+		RLCA
+		LD	C,A
+		LD	A,L
+		AND	0F8H
+		LD	L,A
+		LD	A,C
+		LD	B,H
+		LD	C,L
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,BC
+		ADD	HL,HL			; HL * 10
+		OR	H
+		LD	H,A
+		LD	A,E
+		AND	7
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E			; DE / 8
+		ADD	HL,DE
+		EX	DE,HL
+		LD	HL,TAB_MSK_MODE_0
+		LD	C,A
+		LD	B,00
+		ADD	HL,BC
+		LD	C,(HL)			; Mask
+		EX	DE,HL
+		SET	6,H
+		RES	7,H
+		POP	AF
+		AND	1FH
+		RET
+;
+GET_ADR_1:	LD	A,B
+		PUSH	AF
+		LD	A,L
+		AND	7
+		RLCA
+		RLCA
+		RLCA
+		LD	C,A
+		LD	A,L
+		AND	0F8H
+		LD	L,A
+		LD	A,C
+		LD	B,H
+		LD	C,L
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,BC
+		ADD	HL,HL			; HL * 10
+		OR	H
+		LD	H,A
+		LD	A,E
+		AND	3
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E			; DE / 4
+		ADD	HL,DE
+		EX	DE,HL
+		LD	HL,TAB_MSK_MODE_1
+		LD	C,A
+		LD	B,00
+		ADD	HL,BC
+		LD	C,(HL)			; Mask
+		EX	DE,HL
+		SET	6,H
+		RES	7,H
+		POP	AF
+		AND	1FH
+		RET
+;
+GET_ADR_2:	LD	A,B
+		RLA
+		AND	1EH
+		LD	B,A
+		LD	A,L
+		AND	1
+		OR	B
+		PUSH	AF
+		LD	A,L
+		AND	6
+		RLCA
+		RLCA
+		RLCA
+		LD	C,A
+		LD	A,L
+		AND	0F8H
+		LD	L,A
+		LD	A,C
+		LD	B,H
+		LD	C,L
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,BC
+		ADD	HL,HL
+		ADD	HL,HL			; HL * 20
+		OR	H
+		LD	H,A
+		LD	A,E
+		AND	3
+		SRL	D
+		RR	E
+		SRL	D			; DE / 4
+		RR	E
+		ADD	HL,DE
+		EX	DE,HL
+		LD	HL,TAB_MSK_MODE_1
+		LD	C,A
+		LD	B,00
+		ADD	HL,BC
+		LD	C,(HL)			; Mask
+		EX	DE,HL
+		SET	6,H
+		RES	7,H
+		POP	AF
+		RET
+;
+TAB_MSK_MODE_0:	DB	80H,40H,20H,10H,08H,04H,02H,01H
+TAB_MSK_MODE_1:	DB	88H,44H,22H,11H
+;
+;--------------------  GET_PIXEL  -------------------------------------;
+;
+;[DE]		Coordinate X
+;[HL]		Coordinate Y
+;[A]		Color
+;_WRT_MOD	Write mode
+;_SRC_PAGE	page of screen
+;
+GET_PIXEL:	LD	A,(_SRC_PAGE)
+		CALL	GR_GET_ADR
+		DI
+		LD	B,7DH
+		IN	E,(C)
+		OR	0C0H
+		OUT	(C),A
+		LD	A,(HL)
+		AND	C			; AND Mask
+		LD	C,A
+		OUT	(C),E
+		EI
+		LD	A,(SCRMOD)
+		AND	A
+		JR	Z,GET_PIX_0
+		CP	3
+		JR	Z,GET_PIX_1
+		LD	B,3
+		LD	A,C
+GET_PIX_2:	RLCA
+		OR	C
+		DJNZ	GET_PIX_2
+		LD	C,A
+		AND	2
+		LD	B,A
+		LD	A,C
+		RLCA
+		AND	1
+		OR	B
+		RET
+;
+GET_PIX_1:	LD	A,C
+		RLCA
+		OR	C
+		LD	C,A
+		RRCA
+		AND	2
+		LD	B,A
+		LD	A,C
+		RLCA
+		AND	1
+		OR	B
+		LD	B,A
+		LD	A,C
+		RRCA
+		RRCA
+		AND	4
+		OR	B
+		LD	B,A
+		LD	A,C
+		RLCA
+		RLCA
+		AND	8
+		OR	B
+		RET
+;
+GET_PIX_0:	LD	A,C
+		AND	A
+		RET	Z
+		LD	A,1
+		RET
+;
+;------------------------  LINE  -------------------------------------------;
+;
+;_X1		Coordinate
+;_Y1            Coordinate
+;_X2		Coordinate
+;_Y2		Coordinate
+;_FG_COLOR	Color (pattern)
+;_BG_COLOR
+;_WRT_MOD	Write mode
+;_DST_PAGE	page of screen
+;_LN_MASK	Line mask
+;
+GR_LINE:	LD	A,(_FG_COLOR)
+		CALL	TRANS_COLOR
+		LD	(GR_INK),A
+		LD	A,(_BG_COLOR)
+		CALL	TRANS_COLOR
+		LD	(GR_PAPER),A
+		CALL	TEST_XY_L
+	        RET	C
+;
+		LD	DE,(_X1)
+		LD	HL,(_Y1)
+		LD	(GR_B342),DE		; buff X
+		LD	(GR_B344),HL		; buff Y
+		LD	DE,(_X2)
+		LD	HL,(_Y2)
+		PUSH	HL                      ; (SP) = Y2
+		LD	HL,(GR_B342)
+		OR	A
+		SBC	HL,DE
+		LD	B,H			; BC = X1 - X2
+		LD	C,L
+		JP	M,LINE_1		; X1 < X2
+		LD	HL,(GR_B342)
+		EX	DE,HL
+		LD	(GR_B342),HL		; X2 -> (B342)
+		LD	HL,(GR_B344)            ; Y2 -> (B344)
+		EX	(SP),HL                 ; (SP) = Y1
+		LD	(GR_B344),HL
+		JR	LINE_2
+;
+LINE_1:		LD	HL,0
+		OR	A
+		SBC	HL,BC
+		LD	B,H
+		LD	C,L 			; BC = | X2 - X1 | = DX
+LINE_2:		POP	DE
+		LD	HL,(GR_B344)
+		OR	A
+		SBC	HL,DE
+		EX	DE,HL
+		JP	P,LINE_3                ; To up dirrection
+		LD	HL,0
+		OR	A
+		SBC	HL,DE
+		LD	D,H
+		LD	E,L			; DE = | Y2 - Y1 | = DY
+		OR	A
+		SBC	HL,BC
+		LD	HL,0001
+		JR	NC,LINE_6		; DY >= DX
+		JR	LINE_4			; DY < DX
+;
+LINE_3:		LD	H,D
+		LD	L,E
+		OR	A
+		SBC	HL,BC
+		LD	HL,0FFFFH
+		JR	NC,LINE_5		; DY >= DX
+LINE_4:		LD	(GR_B33A),HL
+		LD	H,B
+		LD	L,C
+		LD	A,0FFH
+		JR	LINE_7
+;
+LINE_5:		PUSH	HL
+		LD	HL,(GR_B342)		; X min = X min + DX
+		ADD	HL,BC
+		LD	(GR_B342),HL
+		LD	HL,(GR_B344)		; Y min = Y min - DY
+		OR	A
+		SBC	HL,DE
+		LD	(GR_B344),HL
+		POP	HL
+LINE_6:		LD	(GR_B33A),HL
+		LD	H,B
+		LD	L,C
+		EX	DE,HL			; SWAP DY , DX
+		XOR	A
+LINE_7:		LD	(GR_B346),A
+		INC	DE
+		LD	(GR_B340),DE		; DE = Dmin
+		INC	HL                      ; HL = Dmax
+		CALL	DIVISION		; HL = HL / DE
+		LD	(GR_B33C),HL		; DE = MOD ( HL / DE )
+		LD	(GR_B33E),DE
+		LD	BC,(GR_B340)		; Dmin
+		LD	D,B
+		LD	E,C
+		SRL	D
+		RR	E
+;
+		DI
+		EXX
+		LD	HL,(_LN_MASK)
+		LD	B,7DH
+		IN	C,(C)
+		EXX
+LINE_11:	PUSH	BC
+		LD	BC,(GR_B33C)
+		LD	HL,(GR_B33E)
+		ADD	HL,DE
+		EX	DE,HL
+		LD	HL,(GR_B340)
+		OR	A
+		SBC	HL,DE
+		JR	NC,LINE_8
+		ADD	HL,DE
+		EX	DE,HL
+		OR	A
+		SBC	HL,DE
+		EX	DE,HL
+		INC	BC			; BC = dx(dy)
+LINE_8:		PUSH	DE
+		LD	A,(GR_B346)
+		OR	A
+		JR	Z,LINE_9
+		LD	HL,(GR_B342)		; Xmin = Xmin + dx
+		LD	D,H
+		LD	E,L
+		ADD	HL,BC
+		LD	(GR_B342),HL            ; DE = Xmin
+		LD	B,H
+		LD	C,L
+		DEC	BC                      ; BC = Xmax
+		LD	HL,(GR_B344)		; HL = Ymin
+		PUSH	HL
+		CALL    TEST_XY_H
+		CALL	C,HOR_LINE
+		POP	DE
+		LD	HL,(GR_B33A)
+		ADD	HL,DE
+		LD	(GR_B344),HL		; Ymin = Ymin + SGN
+		JR	LINE_10
+;
+LINE_9:		LD	HL,(GR_B344)		; Ymin = Ymin + dy		
+		LD	D,H
+		LD	E,L
+		ADD	HL,BC
+		LD	(GR_B344),HL
+		LD	B,H
+		LD	C,L
+		DEC	BC			; BC = Ymax
+		EX	DE,HL
+		LD	DE,(GR_B342)		; DE = Xmin
+		PUSH	DE			; HL = Ymin
+		CALL	TEST_XY_V
+		CALL	C,VERT_LINE
+		POP	DE
+		LD	HL,(GR_B33A)		; Xmin = Xmin + SGN
+		ADD	HL,DE
+		LD	(GR_B342),HL
+LINE_10:	POP	DE
+		POP	BC
+		DEC	BC
+		LD	A,B
+		OR	C
+		JR	NZ,LINE_11
+		EXX
+		OUT	(C),C
+		EXX
+		EI
+		RET
+;
+;TEST_XY_L:	Check coordenates possibility _X1,_X2,_Y1,_Y2 (Line)
+;
+TEST_XY_L:	LD	HL,(_Y1)
+		LD	DE,(_Y2)
+		LD	A,H
+		AND	A
+		JP	P,TEST_XY_L_1
+		LD	HL,0
+;
+		LD	A,D
+	        AND	A
+		JP	P,TEST_XY_L_2
+		SCF
+		RET
+;
+TEST_XY_L_1:	LD	A,D
+		AND	A
+		JP	P,TEST_XY_L_2
+		LD	DE,0
+;
+TEST_XY_L_2:	LD	(_Y1),HL
+		LD	(_Y2),DE
+;
+		LD	HL,(_X1)
+		LD	DE,(_X2)
+		LD	A,H
+		AND	A
+		JP	P,TEST_XY_L_3
+		LD	HL,0
+;
+		LD	A,D
+	        AND	A
+		JP	P,TEST_XY_L_4
+		SCF
+		RET
+;
+TEST_XY_L_3:	LD	A,D
+		AND	A
+		JP	P,TEST_XY_L_4
+		LD	DE,0
+;
+TEST_XY_L_4:	LD	(_X1),HL
+		LD	(_X2),DE
+		AND	A
+		RET
+;
+;DIVISION:	HL = HL / DE, DE = mod
+;
+DIVISION:	PUSH	BC
+		LD	B,H
+		LD	C,L
+		LD	HL,0
+A4932:		LD	A,B
+		LD	B,010H
+		RL	C
+		RLA
+A493B:		RL	L
+		RL	H
+		JR	C,A494E
+		SBC	HL,DE
+		JR	NC,A4946
+		ADD	HL,DE
+A4946:		CCF
+A4947:		RL	C
+		RLA
+		DJNZ	A493B
+		LD	D,A
+		LD	E,C
+		POP	BC
+ 		EX	DE,HL
+		RET
+;
+A494E:		OR	A
+		SBC	HL,DE
+		JR	A4947
+;
+TEST_XY_V:	LD	A,(_CLIP)
+		AND	A
+		SCF
+		RET	Z
+		PUSH	DE
+		PUSH	HL
+		LD	HL,(_XMN_CLIP)
+		LD	A,E
+		SUB	L
+		LD	A,D
+		SBC	A,H
+		JR	C,TEST_XY_V_3
+;
+		LD	HL,(_XMX_CLIP)
+		LD	A,L
+		SUB	E
+		LD	A,H
+		SBC	A,D
+		JR	C,TEST_XY_V_3
+;
+		POP	DE
+		LD	HL,(_YMN_CLIP)
+		LD	A,C
+		SUB	L
+		LD	A,B
+		SBC	A,H
+		JR	C,TEST_XY_V_4
+;
+		LD	HL,(_YMX_CLIP)
+		LD	A,L
+		SUB	E
+		LD	A,H
+		SBC	A,D
+		JR	C,TEST_XY_V_4
+;
+		LD	A,L
+		SUB	C
+		LD	A,H
+		SBC	A,B
+		JR	NC,TEST_XY_V_1
+		LD	B,H
+		LD	C,L
+;
+TEST_XY_V_1:	LD	HL,(_YMN_CLIP)
+		LD	A,E
+		SUB	L
+		LD	A,D
+		SBC	A,H
+		JR	C,TEST_XY_V_2
+		EX	DE,HL
+TEST_XY_V_2:	POP	DE
+		SCF
+		RET
+;
+TEST_XY_V_3:	POP	HL
+TEST_XY_V_4:	POP	DE
+		OR	A
+		RET
+;
+;TEST_XY_H:
+;
+TEST_XY_H:	LD	A,(_CLIP)
+		AND	A
+		SCF
+		RET	Z
+		PUSH	HL
+		PUSH	DE
+		EX	DE,HL
+		LD	HL,(_YMN_CLIP)
+		LD	A,E
+		SUB	L
+		LD	A,D
+		SBC	A,H
+		JR	C,TEST_XY_H_3
+;
+		LD	HL,(_YMX_CLIP)
+		LD	A,L
+		SUB	E
+		LD	A,H
+		SBC	A,D
+		JR	C,TEST_XY_H_3
+;
+		POP	DE
+		LD	HL,(_XMN_CLIP)
+		LD	A,C
+		SUB	L
+		LD	A,B
+		SBC	A,H
+		JR	C,TEST_XY_H_4
+;
+		LD	HL,(_XMX_CLIP)
+		LD	A,L
+		SUB	E
+		LD	A,H
+		SBC	A,D
+		JR	C,TEST_XY_H_4
+;
+		LD	A,L
+		SUB	C
+		LD	A,H
+		SBC	A,B
+		JR	NC,TEST_XY_H_1
+		LD	B,H
+		LD	C,L
+;
+TEST_XY_H_1:	LD	HL,(_XMN_CLIP)
+		LD	A,E
+		SUB	L
+		LD	A,D
+		SBC	A,H
+		JR	NC,TEST_XY_H_2
+		EX	DE,HL
+TEST_XY_H_2:	POP	HL
+		SCF
+		RET
+;
+TEST_XY_H_3:	POP	DE
+TEST_XY_H_4:	POP	HL
+		OR	A
+		RET
+;
+;HOR_LINE:	[HL] = Y, [DE] = X1, [BC] = X2
+;
+HOR_LINE:	LD	A,C
+		SUB     E
+		LD	C,A
+		LD	A,B
+		SBC	A,D
+		LD	B,A
+		INC	BC
+		PUSH	BC
+		LD	A,(_DST_PAGE)
+		CALL	GR_GET_ADR
+		EXX
+		OR	0C0H
+		OUT	(C),A
+		EXX
+		LD	A,(_WRT_MOD)
+		AND	4
+		JR	Z,HOR_LINE_N
+;
+		LD	E,C			; [E] = Mask
+		LD	D,00
+		POP	BC
+HOR_LINE_1:	EXX
+		ADD	HL,HL
+		EXX
+		JR	NC,HOR_LINE_2
+		EXX
+		INC	L
+		EXX
+		LD	A,D
+		OR	E
+		LD	D,A
+HOR_LINE_2:	DEC	BC
+		LD	A,B
+		OR	C
+		JR	Z,HOR_LINE_E
+		RRC	E
+		JR	NC,HOR_LINE_1
+		PUSH	DE
+		LD	E,D
+		LD	A,(GR_INK)
+		LD	D,A
+		CALL	WR_PIX
+		POP	DE
+		LD	D,00
+		INC	HL
+		JR	HOR_LINE_1
+;
+HOR_LINE_E:	LD	E,D
+		LD	A,(GR_INK)
+		LD	D,A
+		JP	WR_PIX
+;
+HOR_LINE_N:	LD	E,C			; [E] = Mask
+		LD	D,00
+		POP	BC
+HOR_LINE_N1:	EXX
+		ADD	HL,HL
+		JR	NC,HOR_LINE_N2
+		INC	L
+		EXX
+		LD	A,(GR_INK)
+		JR	HOR_LINE_N3
+;
+HOR_LINE_N2:	EXX
+		LD	A,(GR_PAPER)
+HOR_LINE_N3:	AND	E
+		OR	D
+		LD	D,A
+		DEC	BC
+		LD	A,B
+		OR	C
+		JR	Z,HOR_LINE_NE
+		RRC	E
+		JR	NC,HOR_LINE_N1
+		PUSH	DE
+		LD	E,0FFH
+		CALL	WR_PIX
+		POP	DE
+		LD	D,00
+		INC	HL
+		JR	HOR_LINE_N1
+;
+HOR_LINE_NE:	LD	E,0FFH
+		JP	WR_PIX
+;
+;VERT_LINE:	[HL] = Y1, [DE] = X, [BC] = Y2
+;
+VERT_LINE:	LD	A,C
+		SUB	L
+		LD	C,A
+		LD	A,B
+		SBC	A,H
+		LD	B,A
+		INC	BC
+		PUSH	BC
+		LD	A,(_DST_PAGE)
+		CALL	GR_GET_ADR
+		EXX
+		OR	0C0H
+		OUT	(C),A
+		EXX
+		LD	A,(_WRT_MOD)
+		AND	4
+		JR	Z,V_LINE_N
+;
+		LD	E,C			; [E] = Mask
+		LD	A,(GR_INK)
+		LD	D,A			; [D] = Ink
+		POP	BC
+V_LINE_1:	EXX
+		ADD	HL,HL
+		EXX
+		JR	NC,V_LINE_2
+		EXX
+		INC	L
+		EXX
+		CALL	WR_PIX
+V_LINE_2:	CALL	NEXT_LINE
+		DEC	BC
+		LD	A,B
+		OR	C
+		JR	NZ,V_LINE_1
+		RET
+;
+V_LINE_N:	LD	E,C			; [E] = Mask
+		POP	BC
+V_LINE_N_1:	EXX
+		ADD	HL,HL
+		JR	NC,V_LINE_N_2
+		INC	L
+		EXX
+		LD	A,(GR_INK)
+		JR	V_LINE_N_3
+;
+V_LINE_N_2:	EXX
+		LD	A,(GR_PAPER)
+V_LINE_N_3:	LD	D,A
+		CALL	WR_PIX
+		CALL	NEXT_LINE
+		DEC	BC
+		LD	A,B
+		OR	C
+		JR	NZ,V_LINE_N_1
+		RET
+;
+;NEXT_LINE:
+;
+NEXT_LINE:	LD	A,(SCRMOD)
+		AND	2
+		JR	NZ,NEXT_LINE_1
+		LD	A,H
+		ADD	A,8
+		LD	H,A
+		AND	38H
+		RET	NZ
+		LD	A,H
+		SUB	40H
+		LD	H,A
+		LD	A,L
+		ADD	A,50H
+		LD	L,A
+		RET	NC
+		INC	H
+		RET
+;
+NEXT_LINE_1:	EXX
+		IN	A,(C)
+		AND	0DFH
+		XOR	01
+		OUT	(C),A
+		EXX
+		AND	01
+		RET	NZ
+		LD	A,H
+		ADD	A,10H
+		LD	H,A
+		AND	30H
+		RET	NZ
+		LD	A,H
+	        SUB	40H
+		LD	H,A
+		LD	A,L
+		ADD	A,0A0H
+		LD	L,A
+		RET	NC
+		INC	H
+		RET
+;
+;PREV_LINE:
+;
+PREV_LINE:	LD	A,(SCRMOD)
+		AND	2
+		JR	NZ,PREV_LINE_1
+		LD	A,H
+		SUB	08
+		LD	H,A
+		AND	38H
+		CP	38H
+		RET	NZ
+		LD	A,H
+		ADD	A,40H
+		LD	H,A
+		LD	A,L
+		SUB	50H
+		LD	L,A
+		RET	NC
+	        DEC	H
+		RET
+;
+PREV_LINE_1:	EXX
+		IN	A,(C)
+		AND	0DFH
+		XOR	01
+		OUT	(C),A
+		EXX
+		AND	01
+		RET	Z
+		LD	A,H
+		SUB	10H
+		LD	H,A
+		AND	30H
+		CP	30H
+		RET	NZ
+		LD	A,H
+	        ADD	A,40H
+		LD	H,A
+		LD	A,L
+		SUB	0A0H
+		LD	L,A
+		RET	NC
+		DEC	H
+		RET
+;
+;-------------------------  HORIZ_LINE  -------------------------------------;
+;
+;_X1		Coordinate X left
+;_X2		Coordinate X right
+;_Y1		Coordinate Y
+;_FG_COLOR	Color (pattern)
+;_BG_COLOR
+;_WRT_MOD	Write mode
+;_DST_PAGE	page of screen
+;_PATPTR	= pointer to the fill pattern
+;_PATMSK	= number of lines at fill pattern (00 - no fill pattern)
+;_CLIP		= clipping flag
+;_XMN_CLIP	= left for clipping
+;_XMX_CLIP	= right for clipping
+;_YMN_CLIP	= up for clipping
+;_YMX_CLIP	= down for clipping
+;
+HORIZ_LINE:	LD	A,(_FG_COLOR)
+		CALL	TRANS_COLOR
+		LD	(GR_INK),A
+		LD	A,(_BG_COLOR)
+		CALL	TRANS_COLOR
+		LD	(GR_PAPER),A
+		LD	HL,(_Y1)
+		LD	DE,(_X1)
+		LD	BC,(_X2)
+		CALL	TEST_XY
+		RET	C
+		LD	A,C
+		SUB	E
+		LD	C,A
+		LD	A,B
+		SBC	A,D
+		LD	B,A
+		INC	BC
+		PUSH	BC
+		EXX
+		POP	DE			; _DX
+		EXX
+;
+		PUSH	DE
+		PUSH	HL
+		LD	DE,0FFFFH
+		LD	A,(_PATMSK)
+		AND	A
+		JR	Z,HORIZ_NO_MASK
+		LD	E,A
+		LD	D,00
+		CALL	DIVISION
+		LD	HL,(_PATPTR+2)
+		ADD	HL,DE
+		ADD	HL,DE
+		LD	A,(_PATPTR+1)
+		AND	1FH
+		OR	0C0H
+		DI
+		LD	B,7EH
+		IN	C,(C)
+		OUT	(C),A
+		LD	E,(HL)
+		INC	HL
+		LD	D,(HL)
+		OUT	(C),C
+		EI
+HORIZ_NO_MASK:	EX	DE,HL
+		CALL	CONV_LN_MASK
+		POP	HL
+		POP	DE
+		CALL	GR_BUF_ADR
+		LD	A,(_DST_PAGE)
+		CALL	GR_GET_ADR
+		DI
+		EXX
+		LD	B,7DH
+		IN	C,(C)
+		OR	0C0H
+		OUT	(C),A
+		EXX
+		CALL	HORIZ_MAIN
+		EXX
+		OUT	(C),C
+		EXX
+		EI
+		RET
+;
+HORIZ_MAIN:	LD	A,(_WRT_MOD)
+		AND	4
+		JP	Z,HORIZ_NORM
+HORIZ_L_2:	LD	D,(IX+00)
+		LD	E,00
+HORIZ_L_1:	LD	A,D
+		AND	C
+		OR	E
+		LD	E,A
+		EXX
+		DEC	DE
+		LD	A,D
+		OR	E
+		JR	Z,HORIZ_L_EX
+		EXX
+		RRC	C
+		JR	NC,HORIZ_L_1
+		LD	A,(GR_INK)
+		LD	D,A
+		CALL	WR_PIX
+		INC	HL
+		INC	IX
+		DB	0DDH
+		LD	A,L
+		CP	LOW GR_BUFFER+8
+		JR	NZ,HORIZ_L_2
+		LD	IX,GR_BUFFER
+		EXX
+		LD	A,E
+		AND	0FH
+		PUSH	AF			; [A]=how much pixels else
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		LD	A,E
+		EXX
+		AND	A
+		CALL	NZ,WR_LINE
+		POP	AF
+		AND	A
+		RET	Z
+		LD	B,A
+		LD	IX,GR_BUFFER
+HORIZ_L_3:	LD	D,(IX+00)
+		LD	E,00
+HORIZ_L_4:	LD	A,D
+		AND	C
+		OR	E
+		LD	E,A
+		DEC	B
+		JR	Z,HORIZ_L_EX_1
+		RRC	C
+		JR	NC,HORIZ_L_4
+		LD	A,(GR_INK)
+		LD	D,A
+		CALL	WR_PIX
+		INC	HL
+		INC	IX
+		JR	HORIZ_L_3
+;
+HORIZ_L_EX:	EXX
+HORIZ_L_EX_1:	LD	A,(GR_INK)
+		LD	D,A
+		JP	WR_PIX
+;
+HORIZ_NORM:	LD	E,00
+HORIZ_LN_1:	LD	A,E
+		OR	C
+		LD	E,A
+		EXX
+		DEC	DE
+		LD	A,D
+		OR	E
+		JR	Z,HORIZ_LN_EX
+		EXX
+		RRC	C
+		JR	NC,HORIZ_LN_1
+		LD	D,(IX+00)
+		CALL	WR_PIX
+		INC	HL
+		INC	IX
+		DB	0DDH
+		LD	A,L
+		CP	LOW GR_BUFFER+8
+		JR	NZ,HORIZ_NORM
+		LD	IX,GR_BUFFER
+		EXX
+		LD	A,E
+		AND	0FH
+		PUSH	AF			; [A]=how much pixels else
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		LD	A,E
+		EXX
+		AND	A
+		CALL	NZ,WR_LINE
+		POP	AF
+		AND	A
+		RET	Z
+		LD	B,A
+		LD	IX,GR_BUFFER
+HORIZ_LN_3:	LD	E,0
+HORIZ_LN_4:	LD	A,E
+		OR	C
+		LD	E,A
+		DEC	B
+		JR	Z,HORIZ_LN_EX_1
+		RRC	C
+		JR	NC,HORIZ_LN_4
+		LD	D,(IX+00)
+		CALL	WR_PIX
+		INC	HL
+		INC	IX
+		JR	HORIZ_LN_3
+;
+HORIZ_LN_EX:	EXX
+HORIZ_LN_EX_1:	LD	D,(IX+00)
+		JP	WR_PIX
+;
+;WR_LINE	Mode 0
+;
+WR_LINE_0_0:	EX	DE,HL
+		PUSH	BC
+WR_LINE_0_0_1:	LD	HL,GR_BUFFER
+		LDI
+		LDI
+		DEC	A
+		JR	NZ,WR_LINE_0_0_1
+		POP	BC
+		EX	DE,HL
+		RET
+;
+WR_LINE_1_0:	EX	DE,HL
+		PUSH	BC
+WR_LINE_1_0_1:	LD	HL,GR_BUFFER
+		LDI
+		LDI
+		LDI
+		LDI
+		DEC	A
+		JR	NZ,WR_LINE_1_0_1
+		POP	BC
+		EX	DE,HL
+		RET
+;
+WR_LINE_3_0:	EX	DE,HL
+		PUSH	BC
+WR_LINE_3_0_1:	LD	HL,GR_BUFFER
+		LDI
+		LDI
+		LDI
+		LDI
+		LDI
+		LDI
+		LDI
+		LDI
+		DEC	A
+		JR	NZ,WR_LINE_3_0_1
+		POP	BC
+		EX	DE,HL
+		RET
+;
+;WR_LINE	AND	Mode
+;
+MAC_AND_LINE	MACRO
+		LD	A,(DE)
+		AND	(HL)
+		LD	(HL),A
+		INC	HL
+		INC	DE
+		LD	A,(DE)
+		AND	(HL)
+		LD	(HL),A
+		INC	HL
+		INC	DE
+		ENDM
+;
+WR_LINE_0_1:	LD	B,A
+WR_LINE_0_1_1:	LD	DE,GR_BUFFER
+		MAC_AND_LINE
+		DJNZ	WR_LINE_0_1_1
+		RET
+;
+WR_LINE_1_1:	LD	B,A
+WR_LINE_1_1_1:	LD	DE,GR_BUFFER
+		MAC_AND_LINE
+		MAC_AND_LINE
+		DJNZ	WR_LINE_1_1_1
+		RET
+;
+WR_LINE_3_1:	LD	B,A
+WR_LINE_3_1_1:	LD	DE,GR_BUFFER
+		MAC_AND_LINE
+		MAC_AND_LINE
+		MAC_AND_LINE
+		MAC_AND_LINE
+		DJNZ	WR_LINE_3_1_1
+		RET
+;
+;WR_LINE	OR	Mode
+;
+MAC_OR_LINE	MACRO
+		LD	A,(DE)
+		OR	(HL)
+		LD	(HL),A
+		INC	HL
+		INC	DE
+		LD	A,(DE)
+		OR	(HL)
+		LD	(HL),A
+		INC	HL
+		INC	DE
+		ENDM
+;
+WR_LINE_0_2:	LD	B,A
+WR_LINE_0_2_1:	LD	DE,GR_BUFFER
+		MAC_OR_LINE
+		DJNZ	WR_LINE_0_2_1
+		RET
+;
+WR_LINE_1_2:	LD	B,A
+WR_LINE_1_2_1:	LD	DE,GR_BUFFER
+		MAC_OR_LINE
+		MAC_OR_LINE
+		DJNZ	WR_LINE_1_2_1
+		RET
+;
+WR_LINE_3_2:	LD	B,A
+WR_LINE_3_2_1:	LD	DE,GR_BUFFER
+		MAC_OR_LINE
+		MAC_OR_LINE
+		MAC_OR_LINE
+		MAC_OR_LINE
+		DJNZ	WR_LINE_3_2_1
+		RET
+;
+;WR_LINE	XOR	Mode
+;
+MAC_XOR_LINE	MACRO
+		LD	A,(DE)
+		XOR	(HL)
+		LD	(HL),A
+		INC	HL
+		INC	DE
+		LD	A,(DE)
+		XOR	(HL)
+		LD	(HL),A
+		INC	HL
+		INC	DE
+		ENDM
+;
+WR_LINE_0_3:	LD	B,A
+WR_LINE_0_3_1:	LD	DE,GR_BUFFER
+		MAC_XOR_LINE
+		DJNZ	WR_LINE_0_3_1
+		RET
+;
+WR_LINE_1_3:	LD	B,A
+WR_LINE_1_3_1:	LD	DE,GR_BUFFER
+		MAC_XOR_LINE
+		MAC_XOR_LINE
+		DJNZ	WR_LINE_1_3_1
+		RET
+;
+WR_LINE_3_3:	LD	B,A
+WR_LINE_3_3_1:	LD	DE,GR_BUFFER
+		MAC_XOR_LINE
+		MAC_XOR_LINE
+		MAC_XOR_LINE
+		MAC_XOR_LINE
+		DJNZ	WR_LINE_3_3_1
+		RET
+;
+;WR_LINE	NORMAL
+;
+MAC_PIX_NORM	MACRO
+		LD	A,(HL)			; Normal mode
+		XOR	D
+		OR	E
+		XOR	E
+		XOR	D
+		LD	(HL),A
+		INC	HL
+		ENDM
+;
+MAC_PIX_AND	MACRO
+		LD	A,E			; AND mode
+	        CPL
+		OR	D
+		AND	(HL)
+		LD	(HL),A
+		INC	HL
+		ENDM
+;
+MAC_PIX_OR	MACRO
+		LD	A,D			; OR mode
+		AND	E
+		OR	(HL)
+		LD	(HL),A
+		INC	HL
+		ENDM
+;
+MAC_PIX_XOR	MACRO
+		LD	A,D			; XOR mode
+		AND	E
+		XOR	(HL)
+		LD	(HL),A
+		INC	HL
+		ENDM
+;
+WR_LINE_0_4:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_0_4_1:	LD	E,(IX+00)
+		MAC_PIX_NORM
+		LD	E,(IX+01)
+		MAC_PIX_NORM
+		DJNZ	WR_LINE_0_4_1
+		RET
+;
+WR_LINE_1_4:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_1_4_1:	LD	E,(IX+00)
+		MAC_PIX_NORM
+		LD	E,(IX+01)
+		MAC_PIX_NORM
+		LD	E,(IX+02)
+		MAC_PIX_NORM
+		LD	E,(IX+03)
+		MAC_PIX_NORM
+		DJNZ	WR_LINE_1_4_1
+		RET
+;
+WR_LINE_3_4:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_3_4_1:	LD	E,(IX+00)
+		MAC_PIX_NORM
+		LD	E,(IX+01)
+		MAC_PIX_NORM
+		LD	E,(IX+02)
+		MAC_PIX_NORM
+		LD	E,(IX+03)
+		MAC_PIX_NORM
+		LD	E,(IX+04)
+		MAC_PIX_NORM
+		LD	E,(IX+05)
+		MAC_PIX_NORM
+		LD	E,(IX+06)
+		MAC_PIX_NORM
+		LD	E,(IX+07)
+		MAC_PIX_NORM
+		DJNZ	WR_LINE_3_4_1
+		RET
+;
+WR_LINE_0_5:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_0_5_1:	LD	E,(IX+00)
+		MAC_PIX_AND
+		LD	E,(IX+01)
+		MAC_PIX_AND
+		DJNZ	WR_LINE_0_5_1
+		RET
+;
+WR_LINE_1_5:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_1_5_1:	LD	E,(IX+00)
+		MAC_PIX_AND
+		LD	E,(IX+01)
+		MAC_PIX_AND
+		LD	E,(IX+02)
+		MAC_PIX_AND
+		LD	E,(IX+03)
+		MAC_PIX_AND
+		DJNZ	WR_LINE_1_5_1
+		RET
+;
+WR_LINE_3_5:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_3_5_1:	LD	E,(IX+00)
+		MAC_PIX_AND
+		LD	E,(IX+01)
+		MAC_PIX_AND
+		LD	E,(IX+02)
+		MAC_PIX_AND
+		LD	E,(IX+03)
+		MAC_PIX_AND
+		LD	E,(IX+04)
+		MAC_PIX_AND
+		LD	E,(IX+05)
+		MAC_PIX_AND
+		LD	E,(IX+06)
+		MAC_PIX_AND
+		LD	E,(IX+07)
+		MAC_PIX_AND
+		DJNZ	WR_LINE_3_5_1
+		RET
+;
+WR_LINE_0_6:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_0_6_1:	LD	E,(IX+00)
+		MAC_PIX_OR
+		LD	E,(IX+01)
+		MAC_PIX_OR
+		DJNZ	WR_LINE_0_6_1
+		RET
+;
+WR_LINE_1_6:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_1_6_1:	LD	E,(IX+00)
+		MAC_PIX_OR
+		LD	E,(IX+01)
+		MAC_PIX_OR
+		LD	E,(IX+02)
+		MAC_PIX_OR
+		LD	E,(IX+03)
+		MAC_PIX_OR
+		DJNZ	WR_LINE_1_6_1
+		RET
+;
+WR_LINE_3_6:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_3_6_1:	LD	E,(IX+00)
+		MAC_PIX_OR
+		LD	E,(IX+01)
+		MAC_PIX_OR
+		LD	E,(IX+02)
+		MAC_PIX_OR
+		LD	E,(IX+03)
+		MAC_PIX_OR
+		LD	E,(IX+04)
+		MAC_PIX_OR
+		LD	E,(IX+05)
+		MAC_PIX_OR
+		LD	E,(IX+06)
+		MAC_PIX_OR
+		LD	E,(IX+07)
+		MAC_PIX_OR
+		DJNZ	WR_LINE_3_6_1
+		RET
+;
+WR_LINE_0_7:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_0_7_1:	LD	E,(IX+00)
+		MAC_PIX_XOR
+		LD	E,(IX+01)
+		MAC_PIX_XOR
+		DJNZ	WR_LINE_0_7_1
+		RET
+;
+WR_LINE_1_7:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_1_7_1:	LD	E,(IX+00)
+		MAC_PIX_XOR
+		LD	E,(IX+01)
+		MAC_PIX_XOR
+		LD	E,(IX+02)
+		MAC_PIX_XOR
+		LD	E,(IX+03)
+		MAC_PIX_XOR
+		DJNZ	WR_LINE_1_7_1
+		RET
+;
+WR_LINE_3_7:	LD	B,A
+		LD	IX,GR_BUFFER
+		LD	A,(GR_INK)
+		LD	D,A
+WR_LINE_3_7_1:	LD	E,(IX+00)
+		MAC_PIX_XOR
+		LD	E,(IX+01)
+		MAC_PIX_XOR
+		LD	E,(IX+02)
+		MAC_PIX_XOR
+		LD	E,(IX+03)
+		MAC_PIX_XOR
+		LD	E,(IX+04)
+		MAC_PIX_XOR
+		LD	E,(IX+05)
+		MAC_PIX_XOR
+		LD	E,(IX+06)
+		MAC_PIX_XOR
+		LD	E,(IX+07)
+		MAC_PIX_XOR
+		DJNZ	WR_LINE_3_7_1
+		RET
+;
+;GR_BUF_ADR:    Get pos GR_BUFFER
+;
+GR_BUF_ADR:	LD	IX,GR_BUFFER
+		LD	A,(SCRMOD)
+		AND	A
+		JR	Z,GR_BUF_ADR_0
+		CP	3
+		JR	Z,GR_BUF_ADR_3
+		LD	A,E
+		RRCA
+		RRCA
+		AND	03
+		LD	C,A
+		LD	B,00
+		ADD	IX,BC
+		RET
+;
+GR_BUF_ADR_0:	LD	A,E
+		RRCA
+		RRCA
+		RRCA
+		AND	01
+		LD	C,A
+		LD	B,00
+		ADD	IX,BC
+		RET
+;
+GR_BUF_ADR_3:	LD	A,E
+		RRCA
+		AND	07
+		LD	C,A
+		LD	B,00
+		ADD	IX,BC
+		RET
+;
+;CONV_LN_MASK:	Reroll Line mask ‚ GR_BUFFER
+;		[HL] = Line mask
+;
+CONV_LN_MASK:	LD	IX,GR_BUFFER
+		LD	A,(_WRT_MOD)
+		AND	4
+		JR	Z,CONV_LN_N_MASK
+		LD	A,(SCRMOD)
+		AND	A
+		JR	Z,CONV_LN_MASK_0
+		CP	3
+		JR	NZ,CONV_LN_MASK_1
+		LD	BC,08AAH
+CONV_MASK_0:	XOR	A
+CONV_MASK_1:	ADD	HL,HL
+		JR	NC,CONV_MASK_2
+		OR	C
+CONV_MASK_2:	RRC	C
+		JR	NC,CONV_MASK_1
+		LD	(IX+00),A
+		INC	IX
+		DJNZ	CONV_MASK_0
+		RET
+;
+CONV_LN_MASK_1:	LD	BC,0488H
+		CALL	CONV_MASK_0
+		LD	HL,GR_BUFFER
+		LD	DE,GR_BUFFER+4
+		LD	BC,4
+		LDIR
+		RET
+;
+CONV_LN_MASK_0:	LD	(IX+00),H
+		LD	(IX+01),L
+		LD	(IX+02),H
+		LD	(IX+03),L
+		LD	(IX+04),H
+		LD	(IX+05),L
+		LD	(IX+06),H
+		LD	(IX+07),L
+		RET
+;
+CONV_LN_N_MASK:	LD	A,(SCRMOD)
+		AND	A
+		JR	NZ,CONV_N_MASK_1
+		LD	BC,0280H
+		CALL	CONV_N_MAS_0
+                LD	HL,GR_BUFFER
+		LD	DE,GR_BUFFER+2
+		LD	BC,2
+		LDIR
+		LD	BC,2
+		LDIR
+		LD	BC,2
+		LDIR
+		RET
+;
+CONV_N_MASK_1:	CP	3
+		JR	Z,CONV_N_MASK_2
+		LD	BC,0488H
+		CALL	CONV_N_MAS_0
+		LD	HL,GR_BUFFER
+		LD	DE,GR_BUFFER+4
+		LD	BC,4
+		LDIR
+		RET
+;
+CONV_N_MASK_2:	LD	BC,08AAH
+CONV_N_MAS_0:	LD	D,00
+CONV_N_MAS_1:	ADD	HL,HL
+		JR	NC,CONV_N_MAS_2
+		LD	A,(GR_INK)
+		JR	CONV_N_MAS_3
+;
+CONV_N_MAS_2:	LD	A,(GR_PAPER)
+CONV_N_MAS_3:	AND	C
+		OR	D
+		LD	D,A
+		RRC	C
+		JR	NC,CONV_N_MAS_1
+		LD	(IX+00),D
+		INC	IX
+		DJNZ	CONV_N_MAS_0
+		RET
+;
+;TEST_XY:     	Check for maximum X,Y
+;		[HL] = Y, [DE] = X1, [BC] = X2
+;
+TEST_XY:	LD	A,H
+	        OR	A
+		JP	P,TEST_XY_1
+		SCF
+		RET
+TEST_XY_1:	LD	A,B
+		OR	A
+		JP	P,TEST_XY_2
+		SCF
+		RET
+TEST_XY_2:      LD	A,D
+		OR	A
+		JP	P,TEST_XY_3
+		LD	DE,0
+TEST_XY_3:	LD	A,C
+		SUB	E
+		LD	A,B
+		SBC	A,D
+		JR	NC,TEST_XY_4
+		LD	A,B
+		LD	B,D
+		LD	D,A
+		LD	A,C
+		LD	C,E
+		LD	E,A
+TEST_XY_4:      LD	A,(_CLIP)
+		AND	A
+		RET	Z
+		PUSH	DE
+		LD	DE,(_YMN_CLIP)
+		CALL	CPHLDE
+	        JR	NC,TEST_XY_6
+TEST_XY_5:      POP	DE
+		RET
+;
+;_Y1 >= _YMN_CLIP
+;
+TEST_XY_6:	EX	DE,HL
+		LD	HL,(_YMX_CLIP)
+		CALL	CPHLDE
+		EX	DE,HL
+		JR	C,TEST_XY_5
+;
+		EX	(SP),HL
+		LD	DE,(_XMX_CLIP)
+		LD	A,E
+		SUB	L
+		LD	A,D
+		SBC	A,H
+		JR	C,TEST_XY_9		; _X1 > _XMX_CLIP
+;
+		LD	DE,(_XMN_CLIP)
+		LD	A,C
+		SUB	E
+		LD	A,B
+		SBC	A,D
+		JR	C,TEST_XY_9		; _X2 < _XMN_CLIP
+;
+		LD	DE,(_XMN_CLIP)
+		CALL	CPHLDE
+		JR	NC,TEST_XY_7		; _X1 >= _XMN_CLIP
+		EX	DE,HL
+;
+TEST_XY_7:	LD	DE,(_XMX_CLIP)
+		LD	A,E
+		SUB	C
+		LD	A,D
+		SBC	A,B
+		JR	NC,TEST_XY_9		; _X2 <= _XMX_CLIP
+		LD	B,D
+		LD	C,E
+		AND	A
+;
+TEST_XY_9:	EX	DE,HL
+		POP	HL
+		RET
+;
+;TEST_XY_F:    check for maximum X,Y
+;		(_X1), (_Y1), (_X2), (_Y2)
+;
+TEST_XY_F:	LD	HL,(_Y2)
+		LD	A,H
+		OR	A
+		JP	P,TEST_XY_F_1
+		SCF
+		RET
+;
+TEST_XY_F_1:	LD	HL,(_X2)
+		LD	A,H
+		OR	A
+		JP	P,TEST_XY_F_2
+		SCF
+		RET
+;
+TEST_XY_F_2:	LD	HL,(_Y1)
+		LD	A,H
+		OR	A
+		JP	P,TEST_XY_F_3
+		LD	HL,0
+		LD	(_Y1),HL
+;
+TEST_XY_F_3:	LD	HL,(_X1)
+		LD	A,H
+		OR	A
+		JP	P,TEST_XY_F_4
+		LD      HL,0
+		LD	(_X1),HL
+;
+TEST_XY_F_4:	LD	A,(_CLIP)
+		AND	A
+		RET	Z
+		LD	DE,(_Y1)
+		LD	HL,(_YMX_CLIP)
+		CALL	CPHLDE
+		RET	C			; _Y1 > Ymax
+		LD	HL,(_YMN_CLIP)
+		EX	DE,HL
+		CALL	CPHLDE
+		JR	NC,TEST_XY_F_5
+		LD	(_Y1),DE		; _Y1 < Ymin
+TEST_XY_F_5:	LD	HL,(_Y2)
+		LD	DE,(_YMN_CLIP)
+		CALL	CPHLDE
+		RET	C			; _Y2 < Ymin
+		EX	DE,HL
+		LD	HL,(_YMX_CLIP)
+		CALL	CPHLDE
+		JR	NC,TEST_XY_F_6
+		LD	(_Y2),HL		; _Y2 > Ymax
+TEST_XY_F_6:	LD	DE,(_X1)
+		LD	HL,(_XMX_CLIP)
+		CALL	CPHLDE
+		RET	C			; _X1 > Xmax
+		LD	HL,(_XMN_CLIP)
+		EX	DE,HL
+		CALL	CPHLDE
+		JR	NC,TEST_XY_F_7
+		LD	(_X1),DE		; _X1 < Xmin
+TEST_XY_F_7:	LD	HL,(_X2)
+		LD	DE,(_XMN_CLIP)
+		CALL	CPHLDE
+		RET	C			; _X2 < Xmin
+		EX	DE,HL
+		LD	HL,(_XMX_CLIP)
+		CALL	CPHLDE
+		RET	NC
+		LD	(_X2),HL		; _X2 > Xmax
+		AND	A
+		RET
+;
+;--------------------  FILL_RECTANGLE  --------------------------------;
+;
+;_X1		= x1 coordinate, left upper
+;_Y1		= y1 coordinate
+;_X2		= x2 coordinate, right lower
+;_Y2		= y2 coordinate
+;_FG_COLOR
+;_BG_COLOR
+;_WRT_MOD	= write mode
+;_PATPTR	= pointer to the fill pattern
+;_PATMSK	= line number at fill pattern (00 - no fill pattern)
+;_CLIP		= clipping flag
+;_XMN_CLIP	= left for clipping
+;_XMX_CLIP	= right for clipping
+;_YMN_CLIP	= up for clipping
+;_YMX_CLIP	= down for clipping
+;
+FILL_RECTANGLE:	LD	A,(_FG_COLOR)
+		CALL	TRANS_COLOR
+		LD	(GR_INK),A
+		LD	A,(_BG_COLOR)
+		CALL	TRANS_COLOR
+		LD	(GR_PAPER),A
+		CALL	TEST_XY_F
+		RET	C
+;
+		LD	HL,(_X2)
+		LD	DE,(_X1)
+		OR	A
+		SBC	HL,DE
+		INC	HL
+		LD	(_DX),HL
+;
+		LD	HL,(_Y2)
+		LD	DE,(_Y1)
+		OR	A
+		SBC	HL,DE
+		INC	HL
+		PUSH	HL
+;
+		LD	HL,(_Y1)
+		LD	DE,(_X1)
+		CALL	GR_BUF_ADR
+		LD	A,(_DST_PAGE)
+		CALL	GR_GET_ADR
+		DI
+		EXX
+		LD	B,7DH
+		IN	C,(C)
+		OR	0C0H
+		OUT	(C),A
+		EXX
+		POP	DE
+		LD	B,E
+;
+FILL_R_LOOP:	PUSH	BC
+		PUSH	IX
+		PUSH	BC
+		PUSH	HL
+		PUSH	IX
+		LD	DE,0FFFFH
+		LD	A,(_PATMSK)
+		AND	A
+		JR	Z,FILL_NO_MASK
+		LD	E,A
+		LD	D,00
+		LD	HL,(_Y1)
+		CALL	DIVISION
+		LD	HL,(_PATPTR+2)
+		ADD	HL,DE
+		ADD	HL,DE
+		LD	A,(_PATPTR+1)
+		AND	1FH
+		OR	0C0H
+		LD	B,7EH
+		IN	C,(C)
+		OUT	(C),A
+		LD	E,(HL)
+		INC	HL
+		LD	D,(HL)
+		OUT	(C),C
+FILL_NO_MASK:	EX	DE,HL
+		CALL	CONV_LN_MASK
+		POP	IX
+		POP	HL
+		POP	BC
+		EXX
+		LD	DE,(_DX)
+		EXX
+		PUSH	HL
+		CALL	HORIZ_MAIN
+		LD	HL,(_Y1)
+		INC	HL
+		LD	(_Y1),HL
+		POP	HL
+		CALL	NEXT_LINE
+		POP	IX
+		POP	BC
+		DJNZ	FILL_R_LOOP
+		EXX
+		OUT	(C),C
+		EXX
+		EI
+		RET
+

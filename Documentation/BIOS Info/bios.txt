@@ -1,0 +1,1298 @@
+;FOTON SPECIAL BIOS 19/07/95
+;
+	.Z80
+WORKSPC	EQU	0FCE2H
+EXTRN	ALEST
+;
+;=======================  РАБОЧмЕ  ЯЧЕЙКм  ================================
+;
+XFD90		EQU	0FD90H;	DS 5,0C9H	NMI Hook
+XFD95		EQU	0FD95H;	DS 5,0C9H	Timer Interrupt Hook
+XFD9A		EQU	0FD9AH;	DS 5,0C9H	All Interrupts hook
+XFD9F		EQU	0FD9FH;	DS 5,0C9H	50 Hz Interrupt hook
+XFDA4		EQU	0FDA4H;	DS 5,0C9H	RS-232 Error Interrupt hook
+XFDA9		EQU	0FDA9H;	DS 5,0C9H	RS-232 CTS Interrupt hook
+XFDAE		EQU	0FDAEH;	DS 5,0C9H	RS-232 RxRDY Interrupt hook
+XFDB3		EQU	0FDB3H;	DS 5,0C9H	RS-232 TxRDY Interrupt hook
+XFDB8		EQU	0FDB8H;	DS 5,0C9H	Centronics READY Interrupt hook
+XFDBD		EQU	0FDBDH;	DS 5,0C9H	Keyboard Interrupt hook
+XFDC2		EQU	0FDC2H;	DS 5,0C9H	Mouse move hook
+XFDC7   	EQU     0FDC7H; DS 5,0C9H       BREAK Interrupt hook
+XFDCC   	EQU     0FDCCH; DS 5,0C9H       INKEY hook
+XFDD1		EQU	0FDD1H;	DS 5,0C9H	INPUT hook
+XFDD6		EQU	0FDD6H;	DS 5,0C9H	OUTPUT hook
+XFDDB		EQU	0FDDBH;	DS 5,0C9H	LPTOUT hook
+;
+VRAMADR		EQU	0FDE0H;	JP VRAMADR0
+WYWOD		EQU	0FDE3H;	JP WYWOD_N
+WIDTH		EQU	0FDE6H;	JP WIDTH80
+ROLL3		EQU	0FDE9H;	JP ROLL3_0
+ROLSTR		EQU	0FDECH;	JP ROLSTR_0
+CURON		EQU	0FDEFH;	JP CURON80
+CUROFF		EQU	0FDF2H;	JP CUROFF80
+;
+EXTPORT		EQU	0FDF5H;	Содержимое порта #FABF
+;                D0 - VRAM Bank 0/1 (64K)
+;		 D1 - MODE 0-Norm ,1-High resolution
+;		 D2 - MAPMOD 0-Amstrad ,1-Yamaha mapper
+;		 D3 - MAP Page 0/1 (256K)
+;		 D4 - 580WI53
+;		 D5 - 0-AY8910 ,1-512WI1
+;
+SPCPORT		EQU	0FDF6H;	Содержимое порта 7FFFH D7=1, D6=0
+;		 D0,D1 - режим экрана  0-160*200, 1-320*200, 2-640*200
+;		 D2    - ROM page on 0000h        0-On, 1-Off
+;		 D3    - ROM page on C000h        0-On, 1-Off
+;		 D4    - RUS LED	           1-On
+;		 D5    - SCREEN ON	           1-On
+;
+VDPREGS		EQU	0FDF7H;	DS 14,00	Регистры MC6845
+;
+;=====================  ЯЧЕЙКм  ЭКРАНА  ====================================	
+;
+WUP		EQU	0FE05H;	DB 00H	Верхний край окна
+WLEFT		EQU	0FE06H;	DB 00H	Левый   край окна
+WDOWN		EQU	0FE07H;	DB 18H	Нижний  край окна
+WRIGHT		EQU	0FE08H;	DB 4FH	Правый  край окна
+CSRY		EQU	0FE09H;	DB 00H	Y координата курсора
+CSRX		EQU	0FE0AH;	DB 00H	X координата курсора
+PGTPAGE		EQU	0FE0BH;	DB 08H	Страница PGT
+PGTADR		EQU	0FE0CH;	DW PGTTAB	Адрес PGT	
+SCRMOD		EQU	0FE0EH;	DB 00H	Режим экрана
+;			      	   0	640 * 200  2 цвета
+;				   1	320 * 200  4 цвета
+;				   2	640 * 200  4 цвета
+;				   3	320 * 200 16 цветов
+MODES		EQU	0FE0FH;	DB 00H	Режим вывода символа
+;				   bit 0 - подчеркивание
+;				   bit 1 - негатив
+;				   bit 2 - широкий
+;				   bit 3 - сетчатый
+SYMMOD		EQU	0FE10H;	DB 00H	Режим вывода
+;				   0 NORMAL
+;				   1 AND
+;				   2 OR
+;				   3 XOR
+BASE		EQU	0FE11H;	DW 0000H	Логический адрес начала экрана
+VPAGE		EQU	0FE13H;	DB 00H	Номер страниц для вывода
+INK		EQU	0FE14H;	DB 01H	Цвет символов
+PAPER		EQU	0FE15H;	DB 00H	Цвет фона
+BORDER		EQU	0FE16H;	DB 00H	Цвет бордюра
+;
+BUFSYM1		EQU	0FE17H;	DS 08H,0	Буфер раскрутки PGT
+BUFSYM2		EQU	0FE1FH;	DS 20H,0	Буфер раскрутки символа
+;
+SAVECUR		EQU	0FE3FH;	DW 0000H	SAVE area for cursor
+ESCBUF		EQU	0FE41H;	DS 08H	Буфер ESC последовательности
+ESCADR		EQU	0FE49H;	DW ESCBUF	Адрес в ESCBUF
+ESCCNT		EQU	0FE4BH;	DB 00H	Счетчик ESC последовательности
+GRPHED		EQU	0FE4CH;	DB 00H	не 0 - вывод псевдографики
+;
+MODECUR		EQU	0FE4DH;	DB 0A0H	Режим вывода курсора
+;				   bit5 0 - Отзвук клавиш OFF
+;				   bit6 0 - INSERT OFF
+;				   bit7	0 - CURSOR OFF
+CURINK		EQU	0FE4EH;	DB 0FFH	Цвет курсорa
+BUFCUR		EQU	0FE4FH;	DS 20H,0	Буфер курсора
+CURNORM		EQU	0FE6FH;	DS 08H,0FFH	Вид нормального курсора
+CURINS		EQU	0FE77H;	DS 08H,0FFH	Вид инсерт-курсора
+;
+;================  РАБОТА  С  ПАЛмТРОЙ  ======================================
+;
+PALTAB		EQU	0FE7FH;	DS 10H,COLORS	Таблица палитр
+;
+;================  ЯЧЕЙКм  КЛАВмАТУРЫ  =======================================
+;
+OLDKEY		EQU	0FE8FH;	DS 11,0FFH	Прошлое состояние матрицы KEYBOARD
+NEWKEY		EQU	0FE9AH;	DS 11,0FFH	Новое состояние матрицы KEYBOARD
+;
+KEYBUF		EQU	0FEA5H;	DS 40,0	Буфер нажатых клавиш	
+;
+INTFLAG		EQU	0FECDH;	DB 00	=00 ,если прерывание не кадровое
+;
+SCNCNT		EQU	0FECEH;	DB 01H	Счетчик сканирования KEYBOARD
+REPCNT		EQU	0FECFH;	DB 01H	Счетчик автоповтора
+BEEPCNT		EQU	0FED0H;	DB 00H	Счетчик отзвука клавиш
+;
+GETKEY		EQU	0FED1H;	DW KEYBUF	Адрес в буфере куда ложить вводимый код
+PUTKEY		EQU	0FED3H;	DW KEYBUF	Адрес в буфере откуда брать очередной вводимый код
+;
+TABCOD1		EQU	0FED5H;	DB  08, DW	NORMTAB	Адрес таблицы кодов клавиш
+TABCOD2		EQU	0FED8H;	DB  08, DW	SHIFTAB	Адрес таблицы кодов SHIFT-клавиш
+TABCOD3		EQU	0FEDBH;	DB  08, DW	RUSTAB	Адрес таблицы кодов рус. клавиш
+TABCOD4		EQU	0FEDEH;	DB  08, DW	SHRUSTAB	Адрес таблицы кодов SHIFT-рус. клавиш
+;
+SCAN		EQU	0FEE1H;	DB 00H	Начальное значение для SCNCNT
+REPEAT		EQU	0FEE2H;	DB 00H	Начальное значение для REPCNT
+DELAY		EQU	0FEE3H;	DB 00H	Значение задержки автоповтора
+;
+KEYMOD		EQU	0FEE4H;	DB 00H	Состояние специальных клавиш
+;				bit 3 - CAPS
+;				bit 4 - RUS
+;				bit 5 - SHIFT
+;				bit 6 - CTRL
+;				bit 7 - ALT(COPY)
+;
+;=================  ЯЧЕЙКм РАБОТЫ С МЫШЬЮ  =====================================
+;
+MOUSFLG		EQU	0FEE5H;	DB 00 - MOUSE OFF, <>00 - MOUSE ON
+;
+MOUS_K		EQU	0FEE6H;	DB 0	состояние кнопок
+MOUS_Y		EQU	0FEE7H;	DB 0 - Relative signed X
+MOUS_X		EQU	0FEE8H;	DB 0 - Relative signed Y
+;
+MOUS_Y1		EQU	0FEE9H;	DW 0 - Absolute X
+MOUS_X1		EQU	0FEEBH;	DW 0 - Absolute Y
+;
+MOUS_YMAX	EQU	0FEEDH;	DW 640
+MOUS_XMAX	EQU	0FEEFH;	DW 200
+;
+MOUS_SCLY	EQU	0FEF1H;	DB 0
+MOUS_SCLX	EQU	0FEF2H;	DB 0
+;
+MOUS_TIP	EQU	0FEF3H;	DB 0 - PC Mouse, MS Mouse
+;
+;===============================================================================
+;
+INT_CNT		EQU	0FEF4H;	DW 0	счетчик кадровых прерываний
+TIMER		EQU	0FEF6H;	DW 0	интервальный таймер в мкс.
+;
+BASE0		EQU	0FEF8H;	DW 0	базовый адрес страницы экрана 0
+BASE1		EQU	0FEFAH;	DW 0	базовый адрес страницы экрана 1
+BASE2		EQU	0FEFCH;	DW 0	базовый адрес страницы экрана 2
+BASE3		EQU	0FEFEH;	DW 0	базовый адрес страницы экрана 3
+;
+;========================= ЯЧЕЙКм  RS-232 ======================================
+;
+RX_BUF		EQU	0FF00H;	DS 40H	Reciver buffer
+TX_BUF		EQU	0FF40H;	DS 40H	Transmitter buffer
+RX_HEAD		EQU	0FF80H;	DW RX_BUF
+RX_TAIL		EQU	0FF82H;	DW RX_BUF
+TX_HEAD		EQU	0FF84H;	DW TX_BUF
+TX_TAIL		EQU	0FF86H;	DW TX_BUF
+RS_COM		EQU	0FF88H;	DB 0	Command register
+RS_STAT		EQU	0FF89H;	DB 0	Status register
+RS_MODE		EQU	0FF8AH;	DB 0	0-RTS/CTS, 1-XON/XOFF
+RX_XOFF		EQU	0FF8BH;	DB 0	0FFH - XOFF set
+TX_XOFF		EQU	0FF8CH;	DB 0	0FFH - XOFF set
+;
+;	????????????????????????
+;
+BIOSSLT		EQU	0FF9DH;	DB 8	номер слота с BIOS
+;
+SLTSP		EQU	0FF9EH;	DW SLTWRK	Указатель на SLTWRK
+SLTWRK		EQU	0FFA0H;	DS 40H	Этот буфер используется как стек
+			      ; 	 для записи номеров страниц
+			      ;		 в функциях SAVESLT, LOADSLT	
+PAGEMAP		EQU	0FFE0H;	DS 20H	Карта страниц:
+		      	      ;	 страницы расположены подряд
+			      ;	 содержимое ячеек:
+			      ;	 0 - страница свободна
+			      ;	 1 - страница VRAM
+			      ;	 2 - страница ROM
+			      ;	 3 - системная страница
+			      ;	 4 - страница пользователя
+			      ;	 5 - резидентная страница
+			      ;	 6 - страница RAMDISK
+;
+L0000:	DI
+	JP	INIT		;Функция:	мнициализация BIOS
+				;мзменения:	Все 		
+;
+L0004:	DW	ALEST		;Адрес PGT в BIOS
+L0006:	DW	0
+;
+L0008:	JP	INKEY		;Функция:	Ввод символа
+	NOP			;Выход:		[A]=код введенного символа
+				;мзменения:	нет
+;
+L000C:	JP	RDSLT		;Функция:	Чтение из ячейки
+	NOP			;Вход:		[A]=номер страницы ,[HL]=адрес
+				;Выход:		[A]=содержимое памяти
+				;мзменеия:	Все, устанавливает DI
+;
+L0010:	JP	INPUT		;Функция:	Ввод символа
+	NOP			;Выход:		[A]=код введенного символа
+				;мзменеия:	Нет
+;
+L0014:	JP	WRTSLT		;Функция:	Запись в ячейку
+	NOP			;Вход:		[A]=номер страницы ,[HL]=адрес
+				;		[E]=данные
+				;мзменения:	Все, устанавливает DI
+;			
+L0018:	JP	SYMBOL		;Функция:	Вывод символа на экран
+	NOP			;Вход:		[A]=код символа
+				;мзменения:	Нет
+;
+L001C:	JP	CALSLT		;Функция:	Межстраничный вызов подпрограмм
+	NOP			;Вход:		[HY]=номер страницы
+				;		[IX]=адрес подпрограммы
+				;мзменения:	штрих-регистры, IX, ставит DI
+;
+L0020:	JP	CPHLDE		;Функция:	Сравнение [HL] и [DE]
+	NOP			;Выход:		Признаки
+				;мзменения:	AF
+;
+L0024:	JP	ENASLT		;Функция:	Установка страницы памяти
+	NOP			;Вход:		[A]=номер страницы
+				;		[HL]=адрес
+				;Выход:		[E]=номер старой страницы
+				;мзменения:	Все, устанавливает DI
+;
+L0028:	JP	CPHLBC		;Функция:	Сравнение [HL] и [BC]
+	NOP			;Выход:		Признаки
+				;мзменения:	AF
+;
+L002C:	JP	SAVESLT		;Функция:	Запоминает текущее распределение
+	NOP			;мзменения:	AF
+;
+L0030:	JP	CALLF		;Функция:	Межстраничный вызов подпрограмм
+	NOP			;		RST 30H,DB номер страницы,DW адрес
+				;мзменения:	штрих-регистры,IX,устанав. DI
+;
+L0034:	JP	LOADSLT		;Функция:	Устанавливает распределение,
+	NOP			;		запомненное функцией  002CH
+				;мзменения:	AF
+;
+L0038:	JP	INT38		;Функция:	Обработка прерываний
+;
+;	ПОДПРОГРАММЫ  РАБОТЫ  С  ЖЕЛЕЗОМ
+;
+L003B:	LD	A,13H		;Функция:	Возвращает в [A] номер версии
+	RET
+;
+L003E:	RET
+	NOP
+	NOP
+;
+L0041:	RET
+	NOP
+	NOP
+;
+L0044:	RET
+	NOP
+	NOP
+;
+L0047:	JP	WR_PSG		;Функция:	Запись в регистры AY8910
+				;Вход:		[D]=номер регистра, [E]=данные
+				;мзменения:	AF
+;
+L004A:	JP	RD_PSG		;Функция:	Чтение регистров AY8910
+				;Вход:		[D]=номер регистра
+				;Выход:		[E]=данные
+				;мзменения:	AF
+;
+L004D:	JP	SET_TIMER	;Функция:	Установка значения интервального
+				;		таймера из [HL] в микросекундах
+				;мзменения:	Нет
+;
+L0050:	JP	GET_TIMER	;Функция:	Возвращает значение интервального
+				;		таймера в [HL] в микросекундах
+				;мзменения:     Нет
+;
+L0053:	JP	WR_CLOCK	;Функция:	Запись в регистры часов
+				;Вход:		[D]=номер регистра, [E]=данные
+				;мзменения:	AF
+;
+L0056:	JP	RD_CLOCK	;Функция:	Чтение из регистров часов
+				;Вход:		[D]=номер регистра
+				;Выход:		[E]=[A]=данные
+				;мзменения:	AF
+;
+L0059:	JP	WR_CRT		;Функция:	Запись в регистры MC6845
+				;Вход:		[D]=номер регистра, [E]=данные
+				;мзменения:	Нет
+;
+L005C:	JP	RD_CRT		;Функция:	Чтение из регистров MC6845
+				;Вход:		[D]=номер регистра
+				;Выход:		[E]=данные
+				;мзменения:	Нет
+;
+L005F:	JP	WAIT		;Функция:	Ожидает V_SYNC
+				;мзменения:	AF
+;
+L0062:	JP	CHGRUS		;Функция:	мзменяет состояние лампы РУС
+	NOP			;Вход:		[A]=00 - Off, <>00 - On
+				;мзменения:	AF
+;
+L0066:	JP	NMI		;Функция:	Обработка NMI
+;
+;	ПОДПРОГРАММЫ  РАБОТЫ  С  ЭКРАНОМ
+;
+L0069:	JP	SCR_INIT	;Функция:	мнициализация экрана
+				;мзменения:	Все
+;
+L006C:	JP	DIS_SCR		;Функция:	Гашение экрана
+				;мзменения:	AF
+;
+L006F:	JP	ENA_SCR		;Функция:	Включение экрана
+				;мзменения:	AF
+;
+L0072:	JP	WR_SYMBOL	;Функция:	Выводит символ в позицию [HL]
+				;Вход:		[A]=код символа, [H]=X, [L]=Y
+				;мзменения:	AF
+;
+L0075:	JP	MESSAGE1	;Функция:	Вывод строки из [DE] до 0
+				;		Управляющие коды не работают,	
+				;		вывод в позицию из [HL]
+				;мзменения:	Все
+;
+L0078:	JP	SCROLL		;Функция:	Ролик экрана
+				;Вход:		[B]=00 вниз, иначе ролик вверх
+				;мзменения:	Все
+;
+L007B:	JP	MESSAGE		;Функция:	Вывод строки из [DE] до 0
+				;		Управляющие коды работают,
+				;		вывод в тек. позицию курсора
+				;мзменения:	Все
+;
+L007E:	JP	CLS		;Функция:	Очистка экрана цветом фона
+				;мзменения:	Все
+;
+L0081:	JP	SET_SCRMOD	;Функция:	Установить режим экрана
+				;Вход:		[A]=номер экрана,[B]=цвет текста
+				;				 [C]=цвет фона
+				;мзменения:	Все
+;
+L0084:	JP	GET_SCRMOD	;Функция:	Вернуть режим экрана
+				;Выход:		[A]=режим экрана
+				;мзменения:	Нет
+;
+L0087:	JP	SET_FONT	;Функция:	Установить вид шрифта
+				;Вход:		[A]=вид шрифта
+				;bit 0 - подчеркивание
+				;bit 1 - негатив
+				;bit 2 - широкий
+				;bit 3 - сетчатый
+				;мзменения:	Нет
+;
+L008A:	JP	GET_FONT	;Функция:	Вернуть вид шрифта
+				;Выход:		[A]=вид шрифта
+				;мзменения:	Нет
+;
+L008D:	JP	SET_MODE	;Функция:	Установить режим вывода символов
+				;Вход:		[A]=00	NORMAL
+				;		    01	AND
+				;		    02	OR
+				;		    03	XOR	
+				;мзменения:	Все
+;
+L0090:	JP	GET_MODE	;Функция:	Вернуть режим вывода символов	
+				;Выход:		[A]=режим вывода
+				;мзменения:	Нет
+;
+L0093:	JP	SET_SIZE	;Функция:	Установить размер экрана
+				;Вход:		[H]=X, [L]=Y верхний лев. угол
+				;		[B]=высота, [C]=ширина
+				;мзменения:	Все
+;
+L0096:	JP	GET_SIZE	;Функция:	Вернуть размер экрана
+				;Выход:		[HL],[BC] аналогично
+				;мзменения:	HL,BC,AF
+;
+L0099:	JP	SET_PGT		;Функция:	Установить адрес PGT
+				;Вход:		[HL]=адрес PGT
+				;		[A] =номер страницы
+				;мзменения:	Нет
+;
+L009C:	JP	GET_PGT		;Функция:	Вернуть адрес PGT
+				;Выход:		[HL]=адрес PGT
+				;		[A]= номер страницы
+				;мзменения:	Нет
+;
+L009F:	RET
+	NOP
+	NOP
+;
+L00A2:	JP	BEEP		;Функция:	Выдает BEEP
+				;мзменения:	Все
+;
+L00A5:	JP	SET_VPAGE	;Функция:	Установить страницы экрана
+				;Вход:		[A]=bit0-1 логическая страница
+				;		    bit4-5 физическая страница
+				;мзменения:	Все
+;
+L00A8:	JP	GET_VPAGE	;Функция:	Вернуть страницы экрана
+				;Выход:		[A]=номера страниц
+				;мзменения:	Нет
+;
+L00AB:	JP	SET_BASE	;Функция:	Установить адрес начала экрана
+				;Вход:		[HL]=адрес начала
+				;мзменения:	Все
+;
+L00AE:	JP	GET_BASE	;Функция:	Вернуть адрес начала экрана
+				;Выход:		[HL]=адрес начала
+				;мзменения:	Нет
+;
+L00B1:	JP	SET_INK		;Функция:	Установка цвета символов
+				;Вход:		[A]=цвет символов (0-15)
+				;мзменения:	Все
+;
+L00B4:	JP	GET_INK		;Функция:	Вернуть цвет символов
+				;Выход:		[A]=цвет символов
+				;мзменения:	Все
+;
+L00B7:	JP	SET_PAPER	;Функция:	Установка цвета фона
+				;Вход:		[A]=цвет фона (0-15)
+				;мзменения:	Все
+;
+L00BA:	JP	GET_PAPER	;Функция:	Вернуть цвет фона
+				;Выход:		[A]=цвет фона
+				;мзменения:	Все
+;
+L00BD:	JP	SET_BORDER	;Функция:	Установить цвет бордюра
+				;Вход:		[A]=цвет бордюра (0-63)
+				;мзменения:	Все
+;
+L00C0:	JP	GET_BORDER	;Функция:	Вернуть цвет бордюра
+				;Выход:		[A]=цвет бордюра
+				;мзменения:	Нет
+;
+;	ПОДПРОГРАММЫ  РАБОТЫ  С  ПАЛмТРОЙ
+;
+L00C3:	JP	PAL_INIT	;Функция:	мнициализация палитры
+				;мзменения:	Все
+;
+L00C6:	JP	SET_PAL		;Функция:	Установить палитру
+				;Вход:		[A]=номер цвета, [E]=палитра
+				;мзменения:	AF
+;
+L00C9:	JP	GET_PAL		;Функция:	Вернуть палитру	
+				;Вход:		[A]=номер цвета
+				;Выход:		[E]=номер палитры
+				;мзменения:	AF
+;
+;	ПОДПРОГРАММЫ  РАБОТЫ  С  КУРСОРОМ
+;
+L00CC:	JP	CUR_INIT	;Функция:	мнициализация курсора
+				;мзменения:	Все
+;
+L00CF:	JP	ENA_CUR		;Функция:	Включить курсор
+				;мзменения:	AF
+;
+L00D2:	JP	DIS_CUR		;Функция:	Выключить курсор
+				;мзменения:	AF
+;
+L00D5:	JP	INSERT_ON	;Функция:	Включить раздвижку
+				;мзменения:	AF
+;
+L00D8:	JP	INSERT_OFF	;Функция:	Выключить раздвижку
+				;мзменения:	AF
+;
+L00DB:	JP	SET_CUR		;Функция:	Установить позицию курсора
+				;Вход:		[H]=X, [L]=Y
+				;мзменения:	Нет
+;
+L00DE:	JP	GET_CUR		;Функция:	Вернуть позицию курсора
+				;Выход:		[H]=X, [L]=Y
+				;мзменения:	Нет
+;
+L00E1:	JP	SET_CURINK	;Функция:	Установить цвет курсора
+				;Вход:		[A]=цвет курсора
+				;мзменения:	Нет
+;
+L00E4:	JP	GET_CURINK	;Функция:	Вернуть цвет курсора
+				;Выход:		[A]=цвет курсора
+				;мзменения:	Нет
+;
+L00E7:	JP	PLACE_CUR	;Функция:	Выводит курсор
+				;мзменения:	Все
+;
+L00EA:	JP	ERASE_CUR	;Функция:	Гасит курсор
+				;мзменения:	Все
+;
+;	ПОДПРОГРАММЫ  РАБОТЫ  С  КЛАВмАТУРОЙ
+;
+L00ED:	JP	KEY_INIT	;Функция:	мнициализация клавиатуры
+				;мзменения:	Все
+;
+L00F0:	JP	TST_KEYBUF	;Функция:	Проверка буфера клавиатуры
+				;Выход:		ZF=1, если буфер пуст
+				;мзменения:	AF
+;
+L00F3:	JP	CLR_KEYBUF	;Функция:	Очистка буфера клавиатуры
+				;мзменения:	HL
+;
+L00F6:	JP	READ_KEY	;Функция:	Ввод с клавиатуры
+				;Выход:		[A]=[C] - виртуальный код клавиши
+				;		[B]=bit 3 - CAPS
+				;		    bit 4 - RUS
+				;		    bit 5 - Shift
+				;		    bit 6 - Ctrl
+				;		    bit 7 - Alt(Copy)
+				;		[A]=[C]=00,ZF=1, если не нажата
+				;мзменения:	Нет
+;
+L00F9:	JP	TEST_KEY	;Функция:	Проверка состояния клавиши
+				;Вход:		[A]=номер клавиши
+				;Выход:		ZF=1 нажата
+				;мзменения:	AF
+;
+L00FC:	JP	BREAK		;Функция:	Проверка CTRL+C
+				;Выход:		CF=1, если нажат
+				;мзменения:	AF
+;
+L00FF:	JP	SET_NORM	;Функция:	Устанав. адрес таблицы клавиш
+				;Вход:		[HL]=адрес
+				;мзменения:	Нет
+;
+L0102:	JP	GET_NORM	;Функция:	Возвращ. адрес таблицы клавиш
+				;Выход:		[HL]=адрес
+				;мзменения:	Нет
+;
+L0105:	JP	SET_SHIFT	;Функция:	Устанав. адрес таблицы клавиш
+				;Вход:		[HL]=адрес
+				;мзменения:	Нет
+;
+L0108:	JP	GET_SHIFT	;Функция:	Возвращ. адрес таблицы клавиш
+				;Выход:		[HL]=адрес
+				;мзменения:	Нет
+;
+L010B:	JP	SET_RUS		;Функция:	Устанав. адрес таблицы клавиш
+				;Вход:		[HL]=адрес
+				;мзменения:	Нет
+;
+L010E:	JP	GET_RUS		;Функция:	Возвращ. адрес таблицы клавиш
+				;Выход:		[HL]=адрес
+				;мзменения:	Нет
+;
+L0111:	JP	SET_SHRUS	;Функция:	Устанав. адрес таблицы клавиш
+				;Вход:		[HL]=адрес
+				;мзменения:	Нет
+;
+L0114:	JP	GET_SHRUS	;Функция:	Возвращ. адрес таблицы клавиш
+				;Выход:		[HL]=адрес
+				;мзменения:	Нет
+;
+L0117:	JP	SET_SCAN	;Функция:	Установить счетчик сканирования
+				;Вход:		[A]=новое значение
+				;мзменения:	Нет
+;
+L011A:	JP	GET_SCAN	;Функция:	Вернуть счетчик сканирования
+				;Выход:		[A]=значение счетчика
+				;мзменения:	Нет
+;
+L011D:	JP	SET_REPT	;Функция:	Установить счетчик автоповтора
+				;Вход:		[A]=новое значение
+				;мзменения:	Нет
+;
+L0120:	JP	GET_REPT	;Функция:	Вернуть счетчик автоповтора
+				;Выход:		[A]=значение счетчика
+				;мзменения:	Нет
+;
+L0123:	JP	SET_DELAY	;Функция:	Установить счетчик задержки
+				;Вход:		[A]=новое значение счетчика
+				;мзменения:	Нет
+;
+L0126:	JP	GET_DELAY	;Функция:	Вернуть счетчик задержки
+				;Выход:		[A]=значение счетчика
+				;мзменения:	Нет
+;
+L0129:	JP	CLICKON		;Функция:	Включить отзвук клавиш
+				;мзменения:	AF
+;
+L012C:	JP	CLICKOFF	;Функция:	Выключить отзвук клавиш
+				;мзменения:	AF
+;
+;	ПОДПРОГРАММЫ  РАБОТЫ  С  ПРмНТЕРОМ
+;
+L012F:	JP	LPTOUT		;Функция:	Вывод символа на принтер
+				;Вход:		[A]=код символа
+				;Выход:		CF=1, если нажат Ctrl+C
+				;мзменения:	AF
+;
+L0132:	JP	LPTSTT		;Функция:	Проверка готовности принтера
+				;Выход:		[A] , ZF=1, если готов
+				;		[A]=00, ZF=0, если не готов
+				;мзменения:	AF
+;
+;	ПОДПРОГРАММЫ  РАБОТЫ  С  МЫШЬЮ
+;
+L0135:	JP	MOUS_INIT	;Функция:	мнициализирует мышь
+				;Вход:		[A]=тип мыши: 01-MS, 02-PC
+				;мзменения:	Все
+;
+L0138:	JP	MOUS_ON		;Функция:	Включить драйвер мыши
+				;мзменения:	AF
+;
+L013B:	JP	MOUS_OFF	;Функция:	Выключить драйвер мыши
+				;мзменения:	AF
+;
+L013E:	JP	GET_MOUS	;Функция:	Вернуть состояние MOUSE
+				;Выход:		[HL]=X, [DE]=Y  Absolute
+				;		[A]=bit 0 - Left button
+				;		    bit 1 - Medium button
+				;		    bit 2 - Right button
+				;		    bit 3 - CAPS
+				;		    bit 4 - RUS
+				;		    bit 5 - Shift
+				;		    bit 6 - Ctrl
+				;		    bit 7 - Alt(Copy)
+				;мзменения:	Все
+;
+L0141:	JP	SET_MLIM	;Функция:	Устанавливает границы координат,
+				;		тек. координата мыши = 00
+				;Вход:		[HL]=Xmax, [DE]=Ymax
+				;мзменения:	Нет
+;
+L0144:	JP	GET_MLIM	;Функция:	Возвращает границы координат
+				;Выход:		[HL]=Xmax, [DE]=Ymax
+				;мзменения:	Нет
+;
+L0147:	JP	SET_MSCAL	;Функция:	Устанавливает масштаб мыши
+				;Вход:		[H]=X scale
+				;		[L]=Y scale
+				;мзменения:	Нет
+;
+L014A:	JP	GET_MSCAL	;Функция:	Возвращает масштаб мыши		
+				;Выход:		[H]=X scale	
+				;		[L]=Y scale
+				;мзменения:	Нет
+;
+L014D:	JP	SNSMAT		;Функция:	Чтение матрицы клавиатуры
+				;Вход:		[D]=номер строки
+				;Выход:		[E]=данные
+				;мзменения:	AF
+;
+L0150:	JP	SET_MOUS	;Функция:	Позиционирование мыши
+				;Вход:		[HL]=X, [DE]=Y
+				;мзменения:	Все
+;
+;	ПОДПРОГРАММЫ  РАБОТЫ  С  RS-232
+;
+L0153:	JP	COM_INI		;Функция:	мнициализация RS-232
+				;Вход:		[A]=bit2,3 число бит:
+				;		    00-5,01-6,10-7,11-8 бит			;	bit 4,5
+				;		bit 4,5 контроль четности
+				;		    00-нет,01-нечетно,11-четно
+				;		bit 6,7 длина стоп-бита
+				;		    01-1бит,10-1.5бит,11-2бит
+				;		[B]=скорсть:	0 - 300
+				;				1 - 600
+				;				2 - 1200
+				;				3 - 2400
+				;мзменения:	Все
+;
+L0156:	JP	COM_OUT_ST	;Функция:	Проверка готовности RS-232 на выход
+;
+L0159:	JP	COM_OUT		;Функция:	Вывод байта в RS-232
+				;Вход:		[A]=байт
+				;Выход:		CF=1, если буфер полный
+				;мзменения:	AF
+;
+L015C:	JP	COM_IN_ST	;Функция:	Проверка готовности RS-232 на ввод
+;
+L015F:	JP	COM_IN		;Функция:	Прием байта из RS-232
+				;Выход:		[A]=байт, CF=1, если нажат Ctrl+C
+				;мзменения:	AF
+;
+L0162:	JP	FMESSXY		;специальная функция быстрого вывода
+L0165:	JP	INVERT		;инверсия знакомест [HL]=XY [B]=N
+;
+;
+;=============== ПОДПРОГРАММЫ РАБОТЫ СО СЛОТАМм =======================;
+SLOTS:		.PHASE	WORKSPC
+LODSLT2:	JR	Z,LODSLT3
+		LD	(DE),A
+LODSLT3:	DEC	B
+		LD	A,B
+		CP	7BH
+		JP	NZ,LODSLT1
+		POP	DE
+		JP	SAVSLT2
+;
+RDSLT:		CALL	ENAPAG
+		LD	A,(HL)
+		OUT	(C),E
+		RET
+;	
+WRTSLT:		PUSH	DE
+		CALL	ENAPAG
+		LD	A,E
+		POP	DE
+		LD	(HL),E
+		OUT	(C),A
+		RET
+;
+CALLF:		EX	(SP),HL
+		PUSH	AF
+		PUSH	DE
+		LD	A,(HL)
+		PUSH	AF
+		POP	IY
+		INC	HL
+		LD	E,(HL)
+		INC	HL
+		LD	D,(HL)
+		INC	HL
+		PUSH	DE
+		POP	IX
+		POP	DE
+		POP	AF
+		EX	(SP),HL
+;
+CALSLT:		DI
+		EXX
+		EX	AF,AF'
+		PUSH	IY
+		POP	AF
+		PUSH	IX
+		POP	HL
+		CALL	ENASLT
+		PUSH	BC
+		PUSH	DE
+		PUSH	HL
+		EXX
+		EX	AF,AF'
+		CALL	USERJP
+		EXX
+		EX	AF,AF'
+		POP	HL
+		POP	DE
+		POP	BC
+		OUT	(C),E
+		LD	A,E
+		AND	0FH
+		CP	9
+		JR	Z,ENORM
+		LD	(HL),A
+ENORM:		EXX
+		EX	AF,AF'
+		RET
+USERJP:		JP	(IX)
+;
+ENASLT:		CALL	ENAPAG
+		LD	HL,0F341H
+		LD	A,B
+		AND	3
+		ADD	A,L
+		LD	L,A
+		LD	A,D
+		AND	1FH
+		CP	9
+		RET	Z
+		LD	(HL),A
+		RET
+;
+ENAPAG:		DI
+		LD	D,A
+		LD	A,H
+		RLCA
+		RLCA
+		AND	3
+		OR	7CH
+		LD	B,A
+		IN	E,(C)
+		LD	A,D
+		OR	0C0H
+		OUT	(C),A
+		RET
+;
+SAVESLT:	PUSH	HL
+		PUSH	BC
+		LD	HL,(SLTSP)
+		LD	B,7CH
+SAVSLT1:	IN	A,(C)
+		LD	(HL),A
+		INC	B
+		INC	HL
+		LD	A,B
+		CP	80H
+		JR	NZ,SAVSLT1
+SAVSLT2:	LD	(SLTSP),HL
+		POP	BC
+		POP	HL
+		RET
+;
+LOADSLT:	PUSH	HL
+		PUSH	BC
+		PUSH	DE
+		LD	DE,0F345H
+		LD	HL,(SLTSP)
+		LD	B,7FH
+LODSLT1:	DEC	HL
+		DEC	DE
+		LD	A,(HL)
+		OUT	(C),A
+		AND	1FH
+		CP	9
+		JP	LODSLT2
+		.DEPHASE
+;
+;============= ПОДПРОГРАММЫ РАБОТЫ С ЖЕЛЕЗОМ ================;
+INITI1:		LD	B,10H
+		LD	D,0
+INITI2:		LD	E,(HL)
+		CALL	WR_CRT
+		INC	HL
+		INC	D
+		DJNZ	INITI2
+		RET
+;
+MC6845L:	DEFB	3FH,28H,2EH,8EH,26H,00H,19H,1EH
+		DEFB	00H,07H,00H,00H,00H,00H,00H,00H
+MC6845H:	DEFB	6BH,50H,51H,8EH,26H,00H,19H,1EH
+		DEFB	00H,07H,00H,00H,00H,00H,00H,00H
+;
+CPHLDE:		LD	A,H
+		CP	D
+		RET	NZ
+		LD	A,L
+		CP	E
+		RET
+;
+CPHLBC:		LD	A,H
+		CP	B
+		RET	NZ
+		LD	A,L
+		CP	C
+		RET
+;
+NMI:		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		EXX
+		EX	AF,AF'
+		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		PUSH	IY
+		PUSH	IX
+		CALL	XFD90
+		POP	IX
+		POP	IY
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		EX	AF,AF'
+		EXX
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		RETN
+;
+WR_PSG:		DI
+		PUSH	BC
+		LD	B,0F4H
+		OUT	(C),D
+		LD	B,0F6H
+		IN	A,(C)
+		OR	0C0H
+		OUT	(C),A
+		AND	3FH
+		OUT	(C),A
+		LD	B,0F4H
+		OUT	(C),E
+		LD	B,0F6H
+		LD	C,A
+		OR	80H
+		OUT	(C),A
+		OUT	(C),C
+		POP	BC
+		EI
+		RET
+;
+RD_PSG:		DI
+		PUSH	BC
+		LD	B,0F4H
+		OUT	(C),D
+		LD	B,0F6H
+		IN	A,(C)
+		AND	30H
+		LD	C,A
+		OR	0C0H
+		OUT	(C),A
+		OUT	(C),C
+		INC	B
+		LD	A,92H
+		OUT	(C),A
+		LD	B,0F4H
+		IN	E,(C)
+		LD	B,0F7H
+		LD	A,82H
+		OUT	(C),A
+		DEC	B
+		OUT	(C),C
+		POP	BC
+		EI
+		RET
+;
+WR_TIMER:	DI
+		PUSH	BC
+		LD	B,0F6H
+		IN	C,(C)
+		PUSH	BC
+		LD	B,0F4H
+		OUT	(C),E
+		LD	A,D
+		AND	3
+		LD	BC,0FABCH
+		OR	C
+		LD	C,A
+		LD	A,(EXTPORT)
+		SET	4,A
+		OUT	(C),A
+		RES	4,A
+		OUT	(C),A
+		POP	BC
+		OUT	(C),C
+		POP	BC
+		EI
+		RET
+;
+WR_CLOCK:	LD	A,D
+		CP	10
+		JR	NC,WRITE_CLOCK
+		PUSH	DE
+WR_CLOCK_1:	LD	D,10
+		CALL	READ_CLOCK
+		BIT	7,E
+		JR	NZ,WR_CLOCK_1
+		POP	DE
+WRITE_CLOCK:	DI
+		PUSH	BC
+		LD	A,(EXTPORT)
+		SET	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	B,0F4H
+		OUT	(C),D
+		LD	BC,0F602H
+		OUT	(C),C
+		LD	C,0
+		OUT	(C),C
+		LD	B,0F4H
+		OUT	(C),E
+		LD	BC,0F604H
+		OUT	(C),C
+		LD	C,0
+		OUT	(C),C
+		RES	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		POP	BC
+		EI
+		RET
+;
+RD_CLOCK:	LD	A,D
+		CP	10
+		JR	NC,READ_CLOCK
+		PUSH	DE
+RD_CLOCK_1:	LD	D,10
+		CALL	READ_CLOCK
+		BIT	7,E
+		JR	NZ,RD_CLOCK_1
+		POP	DE
+READ_CLOCK:	DI
+		PUSH	BC
+		LD	A,(EXTPORT)
+		SET	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	B,0F4H
+		OUT	(C),D
+		LD	BC,0F602H
+		OUT	(C),C
+		LD	C,0
+		OUT	(C),C
+		LD	BC,0F792H
+		OUT	(C),C
+		LD	BC,0F605H
+		OUT	(C),C
+		LD	B,0F4H
+		IN	E,(C)
+		LD	BC,0F600H
+		OUT	(C),C
+		LD	BC,0F782H
+		OUT	(C),C
+		RES	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	A,E
+		POP	BC
+		EI
+		RET
+;
+WR_CRT:		PUSH	BC
+		LD	B,0BCH
+		OUT	(C),D
+		INC	B
+		OUT	(C),E
+		LD	A,D
+		CP	14
+		JR	NC,WR_CRT1
+		PUSH	HL
+		LD	C,D
+		LD	B,00
+		LD	HL,VDPREGS
+		ADD	HL,BC
+		LD	(HL),E
+		POP	HL
+WR_CRT1:	POP	BC
+		RET
+;
+RD_CRT:		PUSH	BC
+		LD	A,D
+		CP	14
+		JR	NC,RD_CRT1
+		PUSH	HL
+		LD	HL,VDPREGS
+		LD	C,D
+		LD	B,00
+		ADD	HL,BC
+		LD	E,(HL)
+		POP	HL
+		POP	BC
+		RET
+;
+RD_CRT1:	LD	B,0BCH
+		OUT	(C),D
+		INC	B
+		IN	E,(C)
+		POP	BC
+		RET
+;
+WAIT:		PUSH	BC
+		LD	B,0F5H
+WAIT_1:		IN	A,(C)
+		RRA
+		JR	NC,WAIT_1
+		POP	BC
+		RET
+;
+CHGRUS:		PUSH	BC
+		LD	B,7FH
+		AND	A
+		LD	A,(SPCPORT)
+		JR	Z,CHGRUS1
+		RES	4,A
+CHGRUS2:	LD	(SPCPORT),A
+		AND	3FH
+		OR	80H
+		OUT	(C),A
+		POP	BC
+		RET
+;
+CHGRUS1:	SET	4,A
+		JR	CHGRUS2
+;
+SNSMAT:		DI
+		PUSH	BC
+		LD	BC,0F40EH
+		OUT	(C),C
+		LD	B,0F6H
+		IN	A,(C)
+		AND	30H
+		LD	C,A
+		OR	0C0H
+		OUT	(C),A
+		OUT	(C),C
+		INC	B
+		LD	A,92H
+		OUT	(C),A
+		LD	B,0F6H
+		LD	A,C
+		OR	D
+		OR	40H
+		OUT	(C),A
+		LD	B,0F4H
+		IN	E,(C)
+		LD	B,0F7H
+		LD	A,82H
+		OUT	(C),A
+		DEC	B
+		OUT	(C),C
+		POP	BC
+		EI
+		RET
+;
+SET_TIMER:	DI
+		LD	(TIMER),HL
+		LD	HL,0
+		LD	(INT_CNT),HL
+		EI
+		RET
+;
+GET_TIMER:	LD	HL,(TIMER)
+		RET
+;
+;=====================	м Н м Ц м А Л м З А Ц м Я  ==========================;
+MAPTAB:		DB	1,1,1,1,4,4,4,3,2,2
+BIOS_MESS:	DB	'FOTON-127 SPECIAL ROM BIOS version 1.00',0DH,0AH
+		DB	'(C) 19/07/1995 Foton&D+',0DH,0AH,0
+;
+MESSAGE:	LD	A,(DE)
+		AND	A
+		RET	Z
+		CALL	SYMBOL
+		INC	DE
+		JR	MESSAGE
+;
+INIT:		LD	SP,WORKSPC
+		LD	BC,7FC7H
+		OUT	(C),C
+		LD	HL,0FC00H
+		LD	DE,0FC01H
+		LD	BC,03FFH
+		LD	(HL),0
+		LDIR
+		LD	HL,SLOTS
+		LD	DE,WORKSPC
+		LD	BC,INITI1-SLOTS
+		LDIR
+		LD	HL,SLTWRK
+		LD	(SLTSP),HL
+		LD	HL,0FD90H
+		LD	DE,0FD91H
+		LD	BC,0004FH
+		LD	(HL),0C9H
+		LDIR
+		LD	A,9
+		LD	H,40H
+		CALL	L0024
+		LD	A,6
+		LD	H,80H
+		CALL	L0024
+		LD	A,7
+		LD	H,0C0H
+		CALL	L0024
+		LD	HL,MAPTAB
+		LD	DE,0FFE0H
+		LD	BC,10
+		LDIR
+		LD	HL,0F341H
+		LD	(HL),4
+		INC	HL
+		LD	(HL),5
+		LD	A,8
+		LD	(BIOSSLT),A
+		LD	A,4
+		LD	(EXTPORT),A
+		LD	A,30H
+		LD	(SPCPORT),A
+		LD	DE,03B6H
+		CALL	WR_TIMER
+		CALL	KEY_INIT
+
+		LD	A,16	;DELAY=8
+		CALL	SET_DELAY
+
+		LD	A,2	;REPEAT=2
+		CALL	SET_REPT
+
+		LD	A,1	;PC MOUSE
+		CALL	MOUS_INIT
+		CALL	CUR_INIT
+		CALL	SCR_INIT
+		LD	DE,BIOS_MESS
+		CALL	MESSAGE
+		JP	4000H
+;
+;		П Р Е Р Ы В А Н м Я
+;
+INT38:		DI
+		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		EXX
+		EX	AF,AF'
+		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		PUSH	IY
+		PUSH	IX
+		LD	B,0F5H
+		IN	A,(C)
+		RRA
+		JR	NC,INT38_1
+		LD	A,0FFH
+		LD	(INTFLAG),A
+INT38_1:	CALL	XFD9A		; All Interrupt Hook
+;		LD	HL,(INT_CNT)
+;		LD	BC,3333
+;		ADD	HL,BC
+;		LD	(INT_CNT),HL
+;		LD	DE,(TIMER)
+;		SBC	HL,DE
+;		JR	C,INT38_2
+;		LD	(INT_CNT),HL
+;		CALL	XFD95		; Timer Interrupt hook
+INT38_2:	LD	B,0EFH
+		IN	A,(C)
+		LD	(RS_STAT),A
+		AND	38H
+		CALL	NZ,XFDA4	; Error Interrupt hook
+;		LD	A,(RS_STAT)
+;		RLA
+;		CALL	C,XFDA9		; CTS Interrupt hook
+		LD	A,(RS_STAT)
+		AND	2
+		CALL	NZ,XFDAE	; RxRDY Interrupt hook
+;		LD	A,(RS_STAT)
+;		RRA	
+;		CALL	C,XFDB3		; TxRDY Interrupt hook
+		LD	A,(INTFLAG)
+		AND	A
+		JR	Z,INT38_4
+		XOR	A
+		LD	(INTFLAG),A
+		CALL	XFD9F		; Hook 50 Hz Interrupt
+		EI
+		LD	HL,SCNCNT	; Счетчик сканирования клавиш
+		DEC	(HL)
+		JR	NZ,INT38_3
+		LD	A,(SCAN)
+		LD	(HL),A
+		CALL	KEY_SCAN	; Сканирует матрицу
+		JR	NZ,INT38_3	; Если клавиша нажата, выход
+		LD	HL,REPCNT       ; Счетчик автоповтора
+		DEC	(HL)
+		JR	NZ,INT38_3
+		LD	A,(REPEAT)
+		LD	(HL),A
+		LD	HL,OLDKEY
+		LD	DE,OLDKEY+1
+		LD	BC,000AH
+		LD	(HL),0FFH
+		LDIR			; Очистка буфера
+		CALL	KEY_REPEAT      ; Автоповтор
+INT38_3:
+;		CALL	LPTSTT
+;		CALL	Z,XFDB8		; BUSY Interrupt hook
+;		LD	D,2
+;		CALL	SNSMAT
+;		LD	A,E
+;		CP	5FH
+;		JR	NZ,INT38_4
+;		LD	D,8
+;		CALL	SNSMAT
+;		LD	A,E
+;		CP	0FBH
+;		CALL	Z,XFDC7 	; BREAK Interrupt hook
+
+INT38_4:	POP	IX
+		POP	IY
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		EX	AF,AF'
+		EXX
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		EI
+		RET
+;
+INCLUDE		BIOS.SCR
+INCLUDE		BIOS.DRV
+;
+		END
+
