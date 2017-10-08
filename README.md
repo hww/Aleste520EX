@@ -22,7 +22,7 @@ One of the programmers who participated in the project created for Aleste a ligh
 ## Specs
 
 ### System block
-
+```
 CPU: Z80
 Clock: 3.5/4/7/8 MHz
 Memory manager: MSX MAPPER
@@ -46,9 +46,9 @@ Real Time Clock (RTC)
 Expansion slot:
   19 address lines
   DMA to whole memory
-
+```
 ### External devices
-
+```
 Board MagicSound
   4 DMA cannels
   6 bits per channel’s volume
@@ -64,9 +64,9 @@ Light-Processor with D54
   Number of chaser steps: 64
   Transition time of one chaser: 0.01-99.99 s
   Number of controllers group: 2-16
-  
+```  
 ### Programms
-
+```
 Mode CPC
   Amstrad’s Basic
   Amstrad’s CP/M
@@ -95,3 +95,4 @@ Mode MSX
     Fire Bird
     Meta lGear
   Foton light-processor
+```
