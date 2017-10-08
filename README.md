@@ -96,3 +96,12 @@ Mode MSX
     Meta lGear
   Foton light-processor
 ```
+
+
+## VDP Emulator
+
+That times we dream about to make computer such MSX2. We pass long time of reverse engineering and knew about MSX hardware all details. The most complicated part was VDP.
+
+Finally we were figure-out that most of time MSX CPU runs empty loop of the game. That means the CPU is almost free! It was reasonable because all graphics task solved by VDP. At this point we decide to implement a software VDP simulator. Then we found that most of MSX2 games use similar small BIOS. And it is too easy replace it by our version.
+
+In two days was implemented VDP simulator and alternative games BIOS. The first game for the test was King Valley 2. With some of minor changes we had completely worked version of the game. The game speed was slightly slower that original MSX computer. Interesting that Aleste’s image look more beauty that real MSX, for example sprites did not have flickering.
