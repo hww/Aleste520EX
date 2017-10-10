@@ -123,3 +123,7 @@ Comparison shows the difference between original and patched VKILLER. Most of ch
 ## Aleste 520EX emulators for PC
 
 Based on Caprice32 implementation [Caprice32 Aleste](https://github.com/hww/Caprice32-Aleste)
+
+## Aleste 520EX Recreate project
+
+Alternative PCB layout with [Kicad](https://github.com/LasDesu/Aleste-520EX)
