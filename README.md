@@ -106,6 +106,20 @@ Finally we were figure-out that most of time MSX CPU runs empty loop of the game
 
 In two days was implemented VDP simulator and alternative games BIOS. The first game for the test was King Valley 2. With some of minor changes we had completely worked version of the game. The game speed was slightly slower that original MSX computer. Interesting that Aleste’s image look more beauty that real MSX, for example sprites did not have flickering.
 
+The doc folder has diff files for VDP emulator patch example. for instance we checking the Vampire Killer game is a 128 KB ROM. Aleste’s version has 3 files:
+```
+VKILLER.1 16 KB
+VKILLER.2 112 KB
+VKILLER.COM 5 KB
+```
+Comparison shows the difference between original and patched VKILLER. Most of changes in the first 16 KB (Game BIOS).
+
+- Diff file of original and patched VKILLER:	_diff.txt_
+- Asm listing of original VKILLER:	_vkiller.asm.txt_
+- Asm listing of patched VKILLER:	_vkiller-patched.asm.txt_
+- Diff file of original and patched asm sources:	_diffasm.txt_
+- Asm listing of the game loader and VDP emulator:	_vkiller-com.asm.txt_
+
 ## Aleste 520EX emulators for PC
 
 Based on Caprice32 implementation [Caprice32 Aleste](https://github.com/hww/Caprice32-Aleste)
