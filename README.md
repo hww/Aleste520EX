@@ -1,5 +1,5 @@
 # Aleste520EX
-Aleste 502EX is russian clone of Amstrad CPC128 created at begin of 1990s
+Aleste 502EX is russian clone of Amstrad CPC128 created at begin of 1990s. See more on [cpcwiki](http://cpcwiki.eu/index.php/Aleste_520EX)
 
 ## Introduction
 
