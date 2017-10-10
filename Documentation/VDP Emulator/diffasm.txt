@@ -1,0 +1,1030 @@
+2,6c2,3
+< 	.ORG	00000H
+< 	LD	B,C		; 0000
+< 	LD	B,D		; 0001
+< 	LD	(HL),L		; 0002
+< 	LD	B,B		; 0003
+---
+> 	.ORG	00001H
+> 	JP	04075H		; 0001
+41,44c38,44
+< 	LD	A,00EH		; 0031
+< 	LD	(08000H),A	; 0033
+< 	LD	A,00FH		; 0036
+< 	LD	(0A000H),A	; 0038
+---
+> 	RST	00H		; 0031
+> 	CP	0F5H		; 0032
+> 	LD	A,003H		; 0034
+> 	RST	08H		; 0036
+> 	CP	000H		; 0037
+> ;
+> 	.ORG	0003BH
+47,48c47,52
+< 	LD	A,(0F0F2H)	; 003F
+< 	LD	(08000H),A	; 0042
+---
+> ;
+> 	.ORG	00040H
+> 	POP	AF		; 0040
+> 	RST	08H		; 0041
+> 	CP	0FBH		; 0042
+> 	RET			; 0044
+50c54,55
+< 	LD	(0A000H),A	; 0048
+---
+> ;
+> 	.ORG	0004BH
+82,102c87,95
+< 	CALL	00138H		; 0079
+< 	RRCA			; 007C
+< 	RRCA			; 007D
+< 	AND	003H		; 007E
+< 	LD	C,A		; 0080
+< 	LD	B,000H		; 0081
+< 	LD	HL,0FCC1H	; 0083
+< 	ADD	HL,BC		; 0086
+< 	LD	A,(HL)		; 0087
+< 	AND	080H		; 0088
+< 	OR	C		; 008A
+< 	LD	C,A		; 008B
+< 	INC	HL		; 008C
+< 	INC	HL		; 008D
+< 	INC	HL		; 008E
+< 	INC	HL		; 008F
+< 	LD	A,(HL)		; 0090
+< 	AND	00CH		; 0091
+< 	OR	C		; 0093
+< 	LD	H,080H		; 0094
+< 	CALL	00024H		; 0096
+---
+> 	JP	04099H		; 0079
+> 	EI			; 007C
+> 	CALL	04045H		; 007D
+> 	EI			; 0080
+> 	CALL	00003H		; 0081
+> 	EI			; 0084
+> 	JR	0007CH		; 0085
+> ;
+> 	.ORG	00099H
+119,120c112
+< 	EI			; 00C2
+< 	JR	000C3H		; 00C3
+---
+> 	JP	0407CH		; 00C2
+306c298
+< 	SUB	001H		; 0230
+---
+> 	SUB	000H		; 0230
+416,423c408,414
+< 	LD	A,007H		; 0314
+< 	CALL	00141H		; 0316
+< 	CPL			; 0319
+< 	AND	002H		; 031A
+< 	LD	HL,0E614H	; 031C
+< 	LD	C,(HL)		; 031F
+< 	LD	(HL),A		; 0320
+< 	XOR	C		; 0321
+---
+> 	PUSH	AF		; 0314
+> 	LD	A,002H		; 0315
+> 	CALL	00141H		; 0317
+> 	CP	0FDH		; 031A
+> 	JR	Z,0034BH	; 031C
+> 	POP	AF		; 031E
+> 	JP	00141H		; 031F
+803,804c794
+< 	LD	B,A		; 0639
+< 	LD	A,B		; 063A
+---
+> 	LD	A,01FH		; 0639
+807,808c797
+< 	LD	A,(HL)		; 063D
+< 	SUB	B		; 063E
+---
+> 	LD	A,01FH		; 063D
+829,839c818,825
+< 	CALL	046D5H		; 0661
+< 	CALL	04674H		; 0664
+< 	EX	AF,AF'		; 0667
+< 	LD	A,(00006H)	; 0668
+< 	LD	C,A		; 066B
+< 	EX	AF,AF'		; 066C
+< 	INIR			; 066D
+< 	DEC	A		; 066F
+< 	JR	NZ,0066DH	; 0670
+< 	EX	DE,HL		; 0672
+< 	RET			; 0673
+---
+> 	PUSH	HL		; 0661
+> 	CALL	00059H		; 0662
+> 	POP	HL		; 0665
+> 	XOR	A		; 0666
+> 	LD	B,A		; 0667
+> 	RET			; 0668
+> ;
+> 	.ORG	00674H
+848,925c834,862
+< 	EX	DE,HL		; 067C
+< 	CALL	046B6H		; 067D
+< 	CALL	04674H		; 0680
+< 	EX	AF,AF'		; 0683
+< 	LD	A,(00007H)	; 0684
+< 	LD	C,A		; 0687
+< 	EX	AF,AF'		; 0688
+< 	OTIR			; 0689
+< 	DEC	A		; 068B
+< 	JR	NZ,00689H	; 068C
+< 	RET			; 068E
+< 	PUSH	DE		; 068F
+< 	PUSH	AF		; 0690
+< 	CALL	046B6H		; 0691
+< 	LD	D,C		; 0694
+< 	LD	A,C		; 0695
+< 	OR	A		; 0696
+< 	JR	Z,0069AH	; 0697
+< 	INC	B		; 0699
+< 	LD	A,(00007H)	; 069A
+< 	LD	C,A		; 069D
+< 	POP	AF		; 069E
+< 	OUT	(C),A		; 069F
+< 	DEC	D		; 06A1
+< 	JR	NZ,0069FH	; 06A2
+< 	DJNZ	0069FH		; 06A4
+< 	POP	DE		; 06A6
+< 	RET			; 06A7
+< 	PUSH	BC		; 06A8
+< 	PUSH	AF		; 06A9
+< 	CALL	046B6H		; 06AA
+< 	LD	A,(00007H)	; 06AD
+< 	LD	C,A		; 06B0
+< 	POP	AF		; 06B1
+< 	OUT	(C),A		; 06B2
+< 	POP	BC		; 06B4
+< 	RET			; 06B5
+< 	PUSH	BC		; 06B6
+< 	LD	A,(00007H)	; 06B7
+< 	INC	A		; 06BA
+< 	LD	C,A		; 06BB
+< 	LD	A,H		; 06BC
+< 	RLCA			; 06BD
+< 	RLCA			; 06BE
+< 	AND	003H		; 06BF
+< 	DI			; 06C1
+< 	OUT	(C),A		; 06C2
+< 	LD	A,08EH		; 06C4
+< 	OUT	(C),A		; 06C6
+< 	LD	A,L		; 06C8
+< 	OUT	(C),A		; 06C9
+< 	LD	A,H		; 06CB
+< 	AND	03FH		; 06CC
+< 	OR	040H		; 06CE
+< 	OUT	(C),A		; 06D0
+< 	POP	BC		; 06D2
+< 	EI			; 06D3
+< 	RET			; 06D4
+< 	PUSH	BC		; 06D5
+< 	LD	A,(00007H)	; 06D6
+< 	INC	A		; 06D9
+< 	LD	C,A		; 06DA
+< 	LD	A,H		; 06DB
+< 	RLCA			; 06DC
+< 	RLCA			; 06DD
+< 	AND	003H		; 06DE
+< 	DI			; 06E0
+< 	OUT	(C),A		; 06E1
+< 	LD	A,08EH		; 06E3
+< 	OUT	(C),A		; 06E5
+< 	LD	A,L		; 06E7
+< 	OUT	(C),A		; 06E8
+< 	LD	A,H		; 06EA
+< 	AND	03FH		; 06EB
+< 	OUT	(C),A		; 06ED
+< 	POP	BC		; 06EF
+< 	EI			; 06F0
+< 	RET			; 06F1
+---
+> 	PUSH	DE		; 067C
+> 	CALL	0005CH		; 067D
+> 	POP	DE		; 0680
+> 	XOR	A		; 0681
+> 	LD	B,A		; 0682
+> 	RET			; 0683
+> ;
+> 	.ORG	0068FH
+> 	PUSH	HL		; 068F
+> 	PUSH	DE		; 0690
+> 	PUSH	BC		; 0691
+> 	PUSH	AF		; 0692
+> 	CALL	0016BH		; 0693
+> 	POP	AF		; 0696
+> 	POP	BC		; 0697
+> 	POP	DE		; 0698
+> 	POP	HL		; 0699
+> 	RET			; 069A
+> ;
+> 	.ORG	006A8H
+> 	JP	00177H		; 06A8
+> ;
+> 	.ORG	006B6H
+> 	JP	00171H		; 06B6
+> ;
+> 	.ORG	006D5H
+> 	JP	00171H		; 06D5
+> ;
+> 	.ORG	006F2H
+932c869
+< 	CALL	046B6H		; 06F8
+---
+> 	CALL	00171H		; 06F8
+947c884,886
+< 	OTIR			; 070E
+---
+> 	RST	10H		; 070E
+> ;
+> 	.ORG	00710H
+952c891,893
+< 	OUT	(C),A		; 0715
+---
+> 	RST	18H		; 0715
+> ;
+> 	.ORG	00717H
+1108,1136c1049,1051
+< 	PUSH	BC		; 081B
+< 	PUSH	HL		; 081C
+< 	LD	B,A		; 081D
+< 	LD	A,(00007H)	; 081E
+< 	INC	A		; 0821
+< 	LD	C,A		; 0822
+< 	DI			; 0823
+< 	OUT	(C),B		; 0824
+< 	LD	A,090H		; 0826
+< 	OUT	(C),A		; 0828
+< 	INC	C		; 082A
+< 	OUT	(C),D		; 082B
+< 	PUSH	AF		; 082D
+< 	POP	AF		; 082E
+< 	OUT	(C),E		; 082F
+< 	DEC	C		; 0831
+< 	LD	HL,0F680H	; 0832
+< 	LD	A,B		; 0835
+< 	ADD	A,A		; 0836
+< 	ADD	A,L		; 0837
+< 	LD	L,A		; 0838
+< 	CALL	046B6H		; 0839
+< 	DEC	C		; 083C
+< 	OUT	(C),D		; 083D
+< 	OUT	(C),E		; 083F
+< 	POP	HL		; 0841
+< 	POP	BC		; 0842
+< 	EI			; 0843
+< 	RET			; 0844
+---
+> 	JP	00200H		; 081B
+> ;
+> 	.ORG	00845H
+1148,1238c1063,1074
+< 	LD	A,002H		; 0853
+< 	CALL	0485CH		; 0855
+< 	RRA			; 0858
+< 	JR	C,00853H	; 0859
+< 	RET			; 085B
+< 	PUSH	BC		; 085C
+< 	PUSH	HL		; 085D
+< 	LD	HL,(00006H)	; 085E
+< 	INC	H		; 0861
+< 	INC	L		; 0862
+< 	LD	C,H		; 0863
+< 	DI			; 0864
+< 	OUT	(C),A		; 0865
+< 	LD	A,08FH		; 0867
+< 	OUT	(C),A		; 0869
+< 	LD	C,L		; 086B
+< 	IN	A,(C)		; 086C
+< 	PUSH	AF		; 086E
+< 	XOR	A		; 086F
+< 	LD	C,H		; 0870
+< 	OUT	(C),A		; 0871
+< 	LD	A,08FH		; 0873
+< 	OUT	(C),A		; 0875
+< 	POP	AF		; 0877
+< 	POP	HL		; 0878
+< 	POP	BC		; 0879
+< 	EI			; 087A
+< 	RET			; 087B
+< 	CALL	04853H		; 087C
+< 	PUSH	BC		; 087F
+< 	LD	A,(00007H)	; 0880
+< 	INC	A		; 0883
+< 	LD	C,A		; 0884
+< 	LD	A,024H		; 0885
+< 	DI			; 0887
+< 	OUT	(C),A		; 0888
+< 	LD	A,091H		; 088A
+< 	OUT	(C),A		; 088C
+< 	INC	C		; 088E
+< 	INC	C		; 088F
+< 	OUT	(C),H		; 0890
+< 	XOR	A		; 0892
+< 	OUT	(C),A		; 0893
+< 	OUT	(C),L		; 0895
+< 	OUT	(C),A		; 0897
+< 	POP	HL		; 0899
+< 	DEC	H		; 089A
+< 	OUT	(C),H		; 089B
+< 	XOR	A		; 089D
+< 	OUT	(C),A		; 089E
+< 	XOR	A		; 08A0
+< 	OUT	(C),A		; 08A1
+< 	OUT	(C),A		; 08A3
+< 	OUT	(C),L		; 08A5
+< 	OUT	(C),A		; 08A7
+< 	LD	A,070H		; 08A9
+< 	OUT	(C),A		; 08AB
+< 	EI			; 08AD
+< 	RET			; 08AE
+< 	CALL	04853H		; 08AF
+< 	PUSH	BC		; 08B2
+< 	LD	A,(00007H)	; 08B3
+< 	INC	A		; 08B6
+< 	LD	C,A		; 08B7
+< 	LD	A,024H		; 08B8
+< 	DI			; 08BA
+< 	OUT	(C),A		; 08BB
+< 	LD	A,091H		; 08BD
+< 	OUT	(C),A		; 08BF
+< 	INC	C		; 08C1
+< 	INC	C		; 08C2
+< 	OUT	(C),H		; 08C3
+< 	XOR	A		; 08C5
+< 	OUT	(C),A		; 08C6
+< 	OUT	(C),L		; 08C8
+< 	OUT	(C),A		; 08CA
+< 	POP	HL		; 08CC
+< 	DEC	H		; 08CD
+< 	OUT	(C),H		; 08CE
+< 	XOR	A		; 08D0
+< 	OUT	(C),A		; 08D1
+< 	XOR	A		; 08D3
+< 	OUT	(C),A		; 08D4
+< 	OUT	(C),A		; 08D6
+< 	OUT	(C),L		; 08D8
+< 	INC	A		; 08DA
+< 	OUT	(C),A		; 08DB
+< 	LD	A,070H		; 08DD
+< 	OUT	(C),A		; 08DF
+< 	EI			; 08E1
+< 	RET			; 08E2
+---
+> 	RET			; 0853
+> ;
+> 	.ORG	0085CH
+> 	RET			; 085C
+> ;
+> 	.ORG	0087CH
+> 	JP	00204H		; 087C
+> ;
+> 	.ORG	008AFH
+> 	JP	00208H		; 08AF
+> ;
+> 	.ORG	008E3H
+1273,1452c1109,1120
+< 	EX	AF,AF'		; 0911
+< 	CALL	04853H		; 0912
+< 	PUSH	BC		; 0915
+< 	LD	A,(00007H)	; 0916
+< 	INC	A		; 0919
+< 	LD	C,A		; 091A
+< 	LD	A,024H		; 091B
+< 	DI			; 091D
+< 	OUT	(C),A		; 091E
+< 	LD	A,091H		; 0920
+< 	OUT	(C),A		; 0922
+< 	INC	C		; 0924
+< 	INC	C		; 0925
+< 	OUT	(C),H		; 0926
+< 	XOR	A		; 0928
+< 	OUT	(C),A		; 0929
+< 	OUT	(C),L		; 092B
+< 	OUT	(C),D		; 092D
+< 	POP	HL		; 092F
+< 	OUT	(C),H		; 0930
+< 	CP	H		; 0932
+< 	JR	NZ,00936H	; 0933
+< 	INC	A		; 0935
+< 	OUT	(C),A		; 0936
+< 	XOR	A		; 0938
+< 	OUT	(C),L		; 0939
+< 	CP	L		; 093B
+< 	JR	NZ,0093FH	; 093C
+< 	INC	A		; 093E
+< 	OUT	(C),A		; 093F
+< 	EX	AF,AF'		; 0941
+< 	OUT	(C),A		; 0942
+< 	XOR	A		; 0944
+< 	OUT	(C),A		; 0945
+< 	LD	A,0C0H		; 0947
+< 	OUT	(C),A		; 0949
+< 	EI			; 094B
+< 	RET			; 094C
+< 	EX	AF,AF'		; 094D
+< 	CALL	04853H		; 094E
+< 	PUSH	BC		; 0951
+< 	LD	A,(00007H)	; 0952
+< 	INC	A		; 0955
+< 	LD	C,A		; 0956
+< 	LD	A,020H		; 0957
+< 	DI			; 0959
+< 	OUT	(C),A		; 095A
+< 	LD	A,091H		; 095C
+< 	OUT	(C),A		; 095E
+< 	INC	C		; 0960
+< 	INC	C		; 0961
+< 	OUT	(C),H		; 0962
+< 	XOR	A		; 0964
+< 	OUT	(C),A		; 0965
+< 	OUT	(C),L		; 0967
+< 	EX	AF,AF'		; 0969
+< 	LD	L,A		; 096A
+< 	AND	003H		; 096B
+< 	OUT	(C),A		; 096D
+< 	OUT	(C),D		; 096F
+< 	XOR	A		; 0971
+< 	OUT	(C),A		; 0972
+< 	OUT	(C),E		; 0974
+< 	LD	A,L		; 0976
+< 	RRA			; 0977
+< 	RRA			; 0978
+< 	AND	003H		; 0979
+< 	OUT	(C),A		; 097B
+< 	POP	HL		; 097D
+< 	OUT	(C),H		; 097E
+< 	XOR	A		; 0980
+< 	OUT	(C),A		; 0981
+< 	OUT	(C),L		; 0983
+< 	OUT	(C),A		; 0985
+< 	OUT	(C),A		; 0987
+< 	OUT	(C),A		; 0989
+< 	LD	A,0D0H		; 098B
+< 	OUT	(C),A		; 098D
+< 	EI			; 098F
+< 	RET			; 0990
+< 	EX	AF,AF'		; 0991
+< 	CALL	04853H		; 0992
+< 	PUSH	BC		; 0995
+< 	LD	A,(00007H)	; 0996
+< 	INC	A		; 0999
+< 	LD	C,A		; 099A
+< 	LD	A,024H		; 099B
+< 	DI			; 099D
+< 	OUT	(C),A		; 099E
+< 	LD	A,091H		; 09A0
+< 	OUT	(C),A		; 09A2
+< 	INC	C		; 09A4
+< 	INC	C		; 09A5
+< 	OUT	(C),D		; 09A6
+< 	XOR	A		; 09A8
+< 	OUT	(C),A		; 09A9
+< 	OUT	(C),E		; 09AB
+< 	EX	AF,AF'		; 09AD
+< 	OUT	(C),A		; 09AE
+< 	POP	DE		; 09B0
+< 	OUT	(C),D		; 09B1
+< 	XOR	A		; 09B3
+< 	OUT	(C),A		; 09B4
+< 	OUT	(C),E		; 09B6
+< 	OUT	(C),A		; 09B8
+< 	LD	A,(HL)		; 09BA
+< 	INC	HL		; 09BB
+< 	OUT	(C),A		; 09BC
+< 	XOR	A		; 09BE
+< 	OUT	(C),A		; 09BF
+< 	LD	A,0F0H		; 09C1
+< 	OUT	(C),A		; 09C3
+< 	DEC	C		; 09C5
+< 	DEC	C		; 09C6
+< 	LD	A,0ACH		; 09C7
+< 	OUT	(C),A		; 09C9
+< 	LD	A,091H		; 09CB
+< 	OUT	(C),A		; 09CD
+< 	INC	C		; 09CF
+< 	INC	C		; 09D0
+< 	LD	A,002H		; 09D1
+< 	CALL	0485CH		; 09D3
+< 	RRA			; 09D6
+< 	RET	NC		; 09D7
+< 	ADD	A,A		; 09D8
+< 	ADD	A,A		; 09D9
+< 	JR	NC,009D1H	; 09DA
+< 	LD	A,(HL)		; 09DC
+< 	INC	HL		; 09DD
+< 	OUT	(C),A		; 09DE
+< 	JR	009D1H		; 09E0
+< 	EX	AF,AF'		; 09E2
+< 	CALL	04853H		; 09E3
+< 	PUSH	BC		; 09E6
+< 	LD	A,(00007H)	; 09E7
+< 	INC	A		; 09EA
+< 	LD	C,A		; 09EB
+< 	LD	A,020H		; 09EC
+< 	DI			; 09EE
+< 	OUT	(C),A		; 09EF
+< 	LD	A,091H		; 09F1
+< 	OUT	(C),A		; 09F3
+< 	INC	C		; 09F5
+< 	INC	C		; 09F6
+< 	OUT	(C),H		; 09F7
+< 	XOR	A		; 09F9
+< 	OUT	(C),A		; 09FA
+< 	OUT	(C),L		; 09FC
+< 	EX	AF,AF'		; 09FE
+< 	RLCA			; 09FF
+< 	RLCA			; 0A00
+< 	LD	L,A		; 0A01
+< 	AND	003H		; 0A02
+< 	OUT	(C),A		; 0A04
+< 	OUT	(C),D		; 0A06
+< 	XOR	A		; 0A08
+< 	OUT	(C),A		; 0A09
+< 	OUT	(C),E		; 0A0B
+< 	LD	A,L		; 0A0D
+< 	LD	E,A		; 0A0E
+< 	RLCA			; 0A0F
+< 	RLCA			; 0A10
+< 	AND	003H		; 0A11
+< 	OUT	(C),A		; 0A13
+< 	POP	HL		; 0A15
+< 	OUT	(C),H		; 0A16
+< 	XOR	A		; 0A18
+< 	OUT	(C),A		; 0A19
+< 	OUT	(C),L		; 0A1B
+< 	OUT	(C),A		; 0A1D
+< 	OUT	(C),A		; 0A1F
+< 	OUT	(C),A		; 0A21
+< 	LD	A,E		; 0A23
+< 	RRA			; 0A24
+< 	RRA			; 0A25
+< 	AND	00FH		; 0A26
+< 	OR	090H		; 0A28
+< 	OUT	(C),A		; 0A2A
+< 	EI			; 0A2C
+< 	RET			; 0A2D
+---
+> 	JP	0020CH		; 0911
+> ;
+> 	.ORG	0094DH
+> 	JP	00210H		; 094D
+> ;
+> 	.ORG	00991H
+> 	JP	00214H		; 0991
+> ;
+> 	.ORG	009E2H
+> 	JP	00218H		; 09E2
+> ;
+> 	.ORG	00A2EH
+1601,1611c1269,1271
+< 	PUSH	BC		; 0B12
+< 	PUSH	HL		; 0B13
+< 	PUSH	DE		; 0B14
+< 	CALL	04B48H		; 0B15
+< 	LD	BC,00808H	; 0B18
+< 	LD	A,001H		; 0B1B
+< 	CALL	0494DH		; 0B1D
+< 	POP	DE		; 0B20
+< 	POP	HL		; 0B21
+< 	POP	BC		; 0B22
+< 	RET			; 0B23
+---
+> 	JP	0021CH		; 0B12
+> ;
+> 	.ORG	00B24H
+1665c1325,1326
+< 	CALL	04911H		; 0B74
+---
+> ;
+> 	.ORG	00B77H
+1672c1333,1334
+< 	CALL	04911H		; 0B7E
+---
+> ;
+> 	.ORG	00B81H
+1719c1381
+< 	CALL	00141H		; 0BD6
+---
+> 	CALL	04314H		; 0BD6
+2277,2283c1939,1946
+< 	LD	HL,0F0F1H	; 0FBE
+< 	LD	A,00BH		; 0FC1
+< 	LD	(06000H),A	; 0FC3
+< 	LD	(HL),A		; 0FC6
+< 	INC	L		; 0FC7
+< 	INC	A		; 0FC8
+< 	LD	(08000H),A	; 0FC9
+---
+> 	LD	A,006H		; 0FBE
+> 	RST	08H		; 0FC0
+> 	DB	0FDH,03EH	; 0FC1
+> 	DEC	B		; 0FC3
+> 	RST	08H		; 0FC4
+> 	CP	000H		; 0FC5
+> 	LD	HL,0F0F1H	; 0FC7
+> 	LD	A,00BH		; 0FCA
+2287c1950,1952
+< 	LD	(0A000H),A	; 0FCF
+---
+> 	LD	(HL),A		; 0FCF
+> 	INC	L		; 0FD0
+> 	INC	A		; 0FD1
+2379,2385c2044,2051
+< 	LD	HL,0F0F1H	; 1065
+< 	LD	A,001H		; 1068
+< 	LD	(06000H),A	; 106A
+< 	LD	(HL),A		; 106D
+< 	INC	A		; 106E
+< 	LD	(08000H),A	; 106F
+< 	INC	HL		; 1072
+---
+> 	LD	A,002H		; 1065
+> 	RST	08H		; 1067
+> 	DB	0FDH,03EH	; 1068
+> 	INC	B		; 106A
+> 	RST	08H		; 106B
+> 	CP	000H		; 106C
+> 	LD	HL,0F0F1H	; 106E
+> 	LD	A,001H		; 1071
+2388c2054,2056
+< 	LD	(0A000H),A	; 1075
+---
+> 	INC	HL		; 1075
+> 	LD	(HL),A		; 1076
+> 	INC	A		; 1077
+2415,2421c2083,2092
+< 	LD	A,00EH		; 10AB
+< 	LD	(08000H),A	; 10AD
+< 	LD	(0F0F2H),A	; 10B0
+< 	EI			; 10B3
+< 	DI			; 10B4
+< 	LD	A,00FH		; 10B5
+< 	LD	(0A000H),A	; 10B7
+---
+> 	LD	A,003H		; 10AB
+> 	RST	08H		; 10AD
+> 	CP	000H		; 10AE
+> ;
+> 	.ORG	010B1H
+> 	LD	A,00EH		; 10B1
+> 	LD	(0F0F2H),A	; 10B3
+> 	LD	A,00FH		; 10B6
+> ;
+> 	.ORG	010BAH
+2487,2493c2158,2165
+< 	LD	HL,0F0F1H	; 1142
+< 	LD	A,001H		; 1145
+< 	LD	(06000H),A	; 1147
+< 	LD	(HL),A		; 114A
+< 	INC	A		; 114B
+< 	LD	(08000H),A	; 114C
+< 	INC	HL		; 114F
+---
+> 	LD	A,002H		; 1142
+> 	RST	08H		; 1144
+> 	DB	0FDH,03EH	; 1145
+> 	INC	B		; 1147
+> 	RST	08H		; 1148
+> 	CP	000H		; 1149
+> 	LD	HL,0F0F1H	; 114B
+> 	LD	A,001H		; 114E
+2496c2168,2170
+< 	LD	(0A000H),A	; 1152
+---
+> 	INC	HL		; 1152
+> 	LD	(HL),A		; 1153
+> 	INC	A		; 1154
+2702,2708c2376,2383
+< 	LD	HL,0F0F1H	; 133F
+< 	LD	A,001H		; 1342
+< 	LD	(06000H),A	; 1344
+< 	LD	(HL),A		; 1347
+< 	INC	A		; 1348
+< 	LD	(08000H),A	; 1349
+< 	INC	HL		; 134C
+---
+> 	LD	A,002H		; 133F
+> 	RST	08H		; 1341
+> 	DB	0FDH,03EH	; 1342
+> 	INC	B		; 1344
+> 	RST	08H		; 1345
+> 	CP	000H		; 1346
+> 	LD	HL,0F0F1H	; 1348
+> 	LD	A,001H		; 134B
+2711c2386,2388
+< 	LD	(0A000H),A	; 134F
+---
+> 	INC	HL		; 134F
+> 	LD	(HL),A		; 1350
+> 	INC	A		; 1351
+2718,2724c2395,2404
+< 	LD	HL,0F0F2H	; 1358
+< 	LD	A,00EH		; 135B
+< 	LD	(08000H),A	; 135D
+< 	LD	(HL),A		; 1360
+< 	INC	L		; 1361
+< 	INC	A		; 1362
+< 	LD	(0A000H),A	; 1363
+---
+> 	LD	A,003H		; 1358
+> 	RST	08H		; 135A
+> 	CP	000H		; 135B
+> 	LD	HL,0F0F2H	; 135D
+> 	LD	A,00EH		; 1360
+> 	LD	(HL),A		; 1362
+> 	INC	L		; 1363
+> 	INC	A		; 1364
+> ;
+> 	.ORG	01366H
+2729,2735c2409,2416
+< 	LD	HL,0F0F1H	; 136A
+< 	LD	A,00BH		; 136D
+< 	LD	(06000H),A	; 136F
+< 	LD	(HL),A		; 1372
+< 	INC	L		; 1373
+< 	INC	A		; 1374
+< 	LD	(08000H),A	; 1375
+---
+> 	LD	A,006H		; 136A
+> 	RST	08H		; 136C
+> 	DB	0FDH,03EH	; 136D
+> 	DEC	B		; 136F
+> 	RST	08H		; 1370
+> 	CP	000H		; 1371
+> 	LD	HL,0F0F1H	; 1373
+> 	LD	A,00BH		; 1376
+2739c2420,2422
+< 	LD	(0A000H),A	; 137B
+---
+> 	LD	(HL),A		; 137B
+> 	INC	L		; 137C
+> 	INC	A		; 137D
+2746c2429
+< 	LD	(08000H),A	; 1387
+---
+> 	CALL	0F560H		; 1387
+2750c2433,2434
+< 	LD	(0A000H),A	; 138D
+---
+> ;
+> 	.ORG	01390H
+2757c2441
+< 	LD	(08000H),A	; 1399
+---
+> 	CALL	0F560H		; 1399
+2761c2445,2446
+< 	LD	(0A000H),A	; 139F
+---
+> ;
+> 	.ORG	013A2H
+2767,2776c2452,2464
+< 	LD	A,004H		; 13A9
+< 	LD	(06000H),A	; 13AB
+< 	LD	(HL),A		; 13AE
+< 	INC	L		; 13AF
+< 	INC	A		; 13B0
+< 	LD	(08000H),A	; 13B1
+< 	LD	(HL),A		; 13B4
+< 	INC	L		; 13B5
+< 	INC	A		; 13B6
+< 	LD	(0A000H),A	; 13B7
+---
+> 	LD	A,007H		; 13A9
+> 	RST	08H		; 13AB
+> 	DB	0FDH,03EH	; 13AC
+> 	INC	B		; 13AE
+> 	LD	(HL),A		; 13AF
+> 	INC	L		; 13B0
+> 	INC	A		; 13B1
+> 	CALL	0F560H		; 13B2
+> 	LD	(HL),A		; 13B5
+> 	INC	L		; 13B6
+> 	INC	A		; 13B7
+> ;
+> 	.ORG	013BAH
+4005,4022c3693,3705
+< 	LD	BC,00400H	; 1C99
+< 	LD	HL,0FCC1H	; 1C9C
+< 	PUSH	BC		; 1C9F
+< 	PUSH	HL		; 1CA0
+< 	LD	A,(HL)		; 1CA1
+< 	BIT	7,A		; 1CA2
+< 	JR	NZ,01CBAH	; 1CA4
+< 	CALL	05CD3H		; 1CA6
+< 	POP	HL		; 1CA9
+< 	POP	BC		; 1CAA
+< 	JR	C,01CB4H	; 1CAB
+< 	INC	HL		; 1CAD
+< 	INC	C		; 1CAE
+< 	DJNZ	01C9FH		; 1CAF
+< 	XOR	A		; 1CB1
+< 	JR	01CB6H		; 1CB2
+< 	LD	A,0FFH		; 1CB4
+< 	LD	(0E600H),A	; 1CB6
+---
+> 	LD	B,000H		; 1C99
+> 	EI			; 1C9B
+> 	HALT			; 1C9C
+> 	DJNZ	01C9BH		; 1C9D
+> 	LD	A,006H		; 1C9F
+> 	CALL	00141H		; 1CA1
+> 	CPL			; 1CA4
+> 	RRA			; 1CA5
+> 	AND	001H		; 1CA6
+> 	LD	(0E600H),A	; 1CA8
+> 	RET			; 1CAB
+> ;
+> 	.ORG	01CB9H
+4355c4038
+< 	LD	(08000H),A	; 1ED8
+---
+> 	CALL	0F563H		; 1ED8
+4367c4050
+< 	LD	(08000H),A	; 1EF3
+---
+> 	CALL	0F566H		; 1EF3
+4807c4490
+< 	LD	(08000H),A	; 215E
+---
+> 	CALL	0F563H		; 215E
+4820c4503
+< 	LD	(08000H),A	; 2180
+---
+> 	CALL	0F566H		; 2180
+5216c4899
+< 	LD	(0A000H),A	; 2458
+---
+> 	CALL	0F56CH		; 2458
+5254c4937
+< 	LD	(0A000H),A	; 2496
+---
+> 	CALL	0F569H		; 2496
+5290c4973
+< 	LD	(0A000H),A	; 24CC
+---
+> 	CALL	0F569H		; 24CC
+5392,5420c5075,5136
+< 	LD	A,(0CE0CH)	; 2552
+< 	OR	A		; 2555
+< 	JP	NZ,065ABH	; 2556
+< 	LD	A,(0CE00H)	; 2559
+< 	CP	005H		; 255C
+< 	JR	Z,025ABH	; 255E
+< 	LD	A,(0C5ACH)	; 2560
+< 	CP	005H		; 2563
+< 	JR	Z,025ABH	; 2565
+< 	LD	HL,0C00FH	; 2567
+< 	LD	A,(HL)		; 256A
+< 	ADD	A,068H		; 256B
+< 	AND	078H		; 256D
+< 	LD	(HL),A		; 256F
+< 	LD	A,(00007H)	; 2570
+< 	LD	C,A		; 2573
+< 	CALL	06591H		; 2574
+< 	LD	HL,0F600H	; 2577
+< 	CALL	046B6H		; 257A
+< 	LD	A,(0C00FH)	; 257D
+< 	LD	D,010H		; 2580
+< 	LD	H,0D6H		; 2582
+< 	LD	B,008H		; 2584
+< 	LD	L,A		; 2586
+< 	OTIR			; 2587
+< 	ADD	A,048H		; 2589
+< 	AND	078H		; 258B
+< 	DEC	D		; 258D
+< 	JR	NZ,02584H	; 258E
+---
+> 	RET			; 2552
+> 	RET			; 2553
+> 	RET			; 2554
+> 	RET			; 2555
+> 	RET			; 2556
+> 	RET			; 2557
+> 	RET			; 2558
+> 	RET			; 2559
+> 	RET			; 255A
+> 	RET			; 255B
+> 	RET			; 255C
+> 	RET			; 255D
+> 	RET			; 255E
+> 	RET			; 255F
+> 	RET			; 2560
+> 	RET			; 2561
+> 	RET			; 2562
+> 	RET			; 2563
+> 	RET			; 2564
+> 	RET			; 2565
+> 	RET			; 2566
+> 	RET			; 2567
+> 	RET			; 2568
+> 	RET			; 2569
+> 	RET			; 256A
+> 	RET			; 256B
+> 	RET			; 256C
+> 	RET			; 256D
+> 	RET			; 256E
+> 	RET			; 256F
+> 	RET			; 2570
+> 	RET			; 2571
+> 	RET			; 2572
+> 	RET			; 2573
+> 	RET			; 2574
+> 	RET			; 2575
+> 	RET			; 2576
+> 	RET			; 2577
+> 	RET			; 2578
+> 	RET			; 2579
+> 	RET			; 257A
+> 	RET			; 257B
+> 	RET			; 257C
+> 	RET			; 257D
+> 	RET			; 257E
+> 	RET			; 257F
+> 	RET			; 2580
+> 	RET			; 2581
+> 	RET			; 2582
+> 	RET			; 2583
+> 	RET			; 2584
+> 	RET			; 2585
+> 	RET			; 2586
+> 	RET			; 2587
+> 	RET			; 2588
+> 	RET			; 2589
+> 	RET			; 258A
+> 	RET			; 258B
+> 	RET			; 258C
+> 	RET			; 258D
+> 	RET			; 258E
+> 	RET			; 258F
+5422,5434c5138,5162
+< 	LD	HL,0F400H	; 2591
+< 	CALL	046B6H		; 2594
+< 	LD	A,(0C00FH)	; 2597
+< 	LD	D,010H		; 259A
+< 	ADD	A,A		; 259C
+< 	LD	H,06AH		; 259D
+< 	LD	L,A		; 259F
+< 	ADD	HL,HL		; 25A0
+< 	LD	B,020H		; 25A1
+< 	OTIR			; 25A3
+< 	ADD	A,090H		; 25A5
+< 	DEC	D		; 25A7
+< 	JR	NZ,0259DH	; 25A8
+---
+> 	RET			; 2591
+> 	RET			; 2592
+> 	RET			; 2593
+> 	RET			; 2594
+> 	RET			; 2595
+> 	RET			; 2596
+> 	RET			; 2597
+> 	RET			; 2598
+> 	RET			; 2599
+> 	RET			; 259A
+> 	RET			; 259B
+> 	RET			; 259C
+> 	RET			; 259D
+> 	RET			; 259E
+> 	RET			; 259F
+> 	RET			; 25A0
+> 	RET			; 25A1
+> 	RET			; 25A2
+> 	RET			; 25A3
+> 	RET			; 25A4
+> 	RET			; 25A5
+> 	RET			; 25A6
+> 	RET			; 25A7
+> 	RET			; 25A8
+> 	RET			; 25A9
+5436,5439c5164,5175
+< 	LD	HL,0D400H	; 25AB
+< 	LD	DE,0F400H	; 25AE
+< 	LD	BC,00280H	; 25B1
+< 	JP	0467CH		; 25B4
+---
+> 	RET			; 25AB
+> 	RET			; 25AC
+> 	RET			; 25AD
+> 	RET			; 25AE
+> 	RET			; 25AF
+> 	RET			; 25B0
+> 	RET			; 25B1
+> 	RET			; 25B2
+> 	RET			; 25B3
+> 	RET			; 25B4
+> 	RET			; 25B5
+> 	RET			; 25B6
+5627c5363
+< 	LD	(0A000H),A	; 274D
+---
+> 	CALL	0F56CH		; 274D
+5632c5368
+< 	LD	(08000H),A	; 2757
+---
+> 	CALL	0F56FH		; 2757
