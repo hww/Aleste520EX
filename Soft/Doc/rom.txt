@@ -1,0 +1,2972 @@
+		.Z80
+		EXTRN	DATA,ALEST
+;DATA  - заставка
+;ALEST - знакогенератор
+		.PHASE	0C000H
+;
+;	Header
+;
+HEADER:		DB	01		; EXECUTABLE ROM
+		DW	0101H		; VERSION NUMBER
+		DB	0		; MODIFICATOR
+		DW	COMMANDS
+;
+		JP	INIT
+;
+COMMANDS:	DB	'MS','X'+80H,0
+;
+INIT:		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		LD	D,2
+		CALL	SNSMAT
+		BIT	5,E
+		JR	NZ,STAR
+;Включаем экран и выходим в AMSTRAD
+		LD	A,8
+		LD	BC,0FABFH
+		OUT	(C),A
+		POP	AF
+		POP	BC
+		POP	DE
+		RET
+;Здесь входим в ALESTE
+STAR:		DI
+;Включаем ALESTE
+		LD	A,4
+		LD	BC,0FABFH
+		OUT	(C),A
+;Страница 7 с 4000
+		LD	BC,7DC7H
+		OUT	(C),C
+;Переписываем себя на 4000
+		LD	HL,HEADER
+		LD	DE,4000H
+		LD	BC,4000H
+		LDIR
+;Страница 4 с 0000
+		LD	BC,7CC4H
+		OUT	(C),C
+;Страница 5 с 4000
+		INC	B
+		INC	C
+		OUT	(C),C
+;Страница 6 с 8000
+		INC	B
+		INC	C
+		OUT	(C),C
+;Страница 7 с С000
+		INC	B
+		INC	C
+		OUT	(C),C
+;Режим 320х200, ROM выкл, экран вкл
+		LD	BC,7CBDH
+		OUT	(C),C
+		LD	SP,3FFFH
+		LD	A,4
+		LD	(EXTPORT),A
+;инициализация Вм53
+		LD	DE,03B6H
+		CALL	WR_TIMER
+;Проверка батареи часов
+		LD	D,0DH
+		CALL	RD_CLOCK
+		BIT	7,E
+		CALL	Z,CLOCK_INIT
+;Читаем клавиатуру
+		LD	D,8
+		CALL	SNSMAT
+;ESC
+		BIT	2,E
+		JP	Z,RE_BOOT
+		LD	D,2
+		CALL	SNSMAT
+;DEL
+		BIT	0,E
+		CALL	Z,RSETUP
+;Читаем загрузочнный диск из часов
+		LD	D,0EH
+		CALL	RD_CLOCK
+		AND	7
+;Зачем ??? надо разобраться !!!
+		CP	1
+		JR	NZ,STAR1
+;      ???
+		LD	(BIOSFCB),A
+		LD	(BDOSFCB),A
+STAR1:
+;Страница 8 (BIOS) с 4000
+		LD	BC,7DC8H
+		OUT	(C),C
+		CALL	CTRL_SUMM
+		LD	D,3CH
+		CALL	RD_CLOCK
+		LD	L,A
+		INC	D
+		CALL	RD_CLOCK
+		LD	H,A
+		CALL	CPHLBC
+;Если контрольная сумма не совпадает идем на перезагрузку
+		JP	NZ,RE_BOOT
+;Страница 9 (BDOS) с 4000
+		LD	BC,7DC9H
+		OUT	(C),C
+		CALL	CTRL_SUMM
+		LD	D,3EH
+		CALL	RD_CLOCK
+		LD	L,A
+		INC	D
+		CALL	RD_CLOCK
+		LD	H,A
+		CALL	CPHLBC
+;Если контрольная сумма не совпадает идем на перезагрузку
+		JP	NZ,RE_BOOT
+;Страница 8 (BIOS) с 0000
+		LD	BC,7CC8H
+		OUT	(C),C
+;Выходим на BIOS
+		JP	0000H
+;=======================================================================
+SET_VRAM:		LD	BC,7DC0H
+		OUT	(C),C
+		INC	B
+		INC	C
+		OUT	(C),C
+		RET
+;
+SETSCR:		CALL	DISSCR
+		CALL	SET_VRAM
+		LD	HL,MC6845H
+		CALL	INITI1
+		LD	A,(EXTPORT)
+		OR	3
+		LD	(EXTPORT),A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	BC,7FBFH
+		OUT	(C),C
+		XOR	A
+		LD	(PAPER),A
+		CALL	SET_BORDER
+		LD	HL,4000H
+		LD	DE,4001H
+		LD	BC,7FFFH
+		LD	(HL),0
+		LDIR
+		RET
+;
+DISSCR:		LD	A,(EXTPORT)
+		RES	3,A
+		LD	(EXTPORT),A
+		LD	BC,0FABFH
+		OUT	(C),A
+		RET
+;
+ENASCR:		LD	A,(EXTPORT)
+		SET	3,A
+		LD	(EXTPORT),A
+		LD	BC,0FABFH
+		OUT	(C),A
+		RET
+;
+CLOCK_TAB:		DB	0	; BOOT DISC, RAM DISC
+		DS	8,0	; RAM DISC MAP
+		DB	1	; MOUSE
+		DB	0	; SCREEN, PRINTER
+		DB	3	; COLORS
+		DB	28H	; KEYBOARD
+		DB	88H	; SOUNDS
+		DB	4CH	; RS-232
+		DB	2	; RS RATE
+;
+CLOCK_INIT:		LD	DE,0A26H
+		CALL	WR_CLOCK
+		LD	DE,0B8EH
+		CALL	WR_CLOCK
+		LD	DE,0
+		LD	B,6
+CLOCK_INIT1:	CALL	WR_CLOCK
+		INC	D
+		DJNZ	CLOCK_INIT1
+		LD	E,1
+		CALL	WR_CLOCK
+		LD	DE,070EH
+		CALL	WR_CLOCK
+		LD	DE,080AH
+		CALL	WR_CLOCK
+		LD	DE,0900H+13
+		CALL	WR_CLOCK
+		LD	DE,0B0EH
+		CALL	WR_CLOCK
+		LD	HL,CLOCK_TAB
+		LD	B,0FH
+		LD	D,0EH
+CLOCK_INIT2:	LD	E,(HL)
+		CALL	WR_CLOCK
+		INC	HL
+		INC	D
+		DJNZ	CLOCK_INIT2
+		RET
+;================== Холодная перезагрузка ========================
+RE_BOOT:
+;Вывод заставки
+		CALL	SETSCR
+		LD	HL,4000H+4*0A0H+22H
+		EXX
+		LD	BC,7DC0H
+		EXX
+		LD	IX,DATA
+		LD	DE,00A0H
+		LD	B,36H
+M0:		PUSH	HL
+		PUSH	HL
+		LD	C,5DH
+M2:		CALL	WWOD
+		LD	(HL),A
+		INC	HL
+		DEC	C
+		JR	NZ,M2
+		POP	HL
+		EXX
+		LD	A,0C1H
+		OUT	(C),A
+		EXX
+		LD	C,5DH
+M3:		CALL	WWOD
+		LD	(HL),A
+		INC	HL
+		DEC	C
+		JR	NZ,M3
+		POP	HL
+		EXX
+		OUT	(C),C
+		EXX
+		CALL	NEXT_LINE
+		DJNZ	M0
+		LD	HL,PALTAB
+		CALL	PAL_SET
+		CALL	ENASCR
+;Собственно загрузка
+BOOT:
+;Включаем страницу 9 (BDOS) c 4000
+		LD	BC,7DC9H
+		OUT	(C),C
+		LD	HL,4000H
+		LD	(FILEST),HL
+		LD	HL,BDOSFCB
+		LD	DE,FCBBUF
+		LD	BC,20
+		LDIR
+;Загрузка BDOS.SYS
+		CALL	INPFILE
+		JP	C,ERROR
+;Подсчет контрольной суммы BDOS и запись в часы
+		CALL	CTRL_SUMM
+		LD	D,3EH
+		LD	E,C
+		CALL	WR_CLOCK
+		INC	D
+		LD	E,B
+		CALL	WR_CLOCK
+;Включаем страницу 8 (BIOS) c 4000
+		LD	BC,7DC8H
+		OUT	(C),C
+		LD	HL,4000H
+		LD	(FILEST),HL
+		LD	HL,BIOSFCB
+		LD	DE,FCBBUF
+		LD	BC,20
+		LDIR
+;Загрузка BIOS.SYS
+		CALL	INPFILE
+		JP	C,ERROR
+;Подсчет контрольной суммы BIOS и запись в часы
+		CALL	CTRL_SUMM
+		LD	D,3CH
+		LD	E,C
+		CALL	WR_CLOCK
+		INC	D
+		LD	E,B
+		CALL	WR_CLOCK
+;Включаем страницу 8 (BIOS) с 0000
+		LD	BC,7CC8H
+		OUT	(C),C
+		JP	0000
+;=== Обработка дисковых ошибок ===
+ERROR:		LD	A,7
+		CALL	SET_INK
+		CALL	SET_VRAM
+;Вывод сообщения об ошибке
+		LD	HL,0718H
+		LD	DE,ERR_MESS
+		CALL	MESSAGE
+;Ожидание нажатия любой клавиши
+		CALL	KEY
+;Очистка сообщения об ошибке
+		LD	HL,0718H
+		LD	B,32
+		XOR	A
+ERROR1:		CALL	SYMBOL
+		INC	H
+		DJNZ	ERROR1
+;Повторяем перезагрузку
+		JP	BOOT
+;================ Конец холодной перезагрузки =========================
+;**********************************************************************
+PAL_SET:		LD	BC,1000H
+M4:		LD	A,C
+		LD	E,(HL)
+		CALL	SET_PAL
+		INC	C
+		INC	HL
+		DJNZ	M4
+		RET
+;
+PALINITB1:		DB	00H,15H,2AH,3FH,10H,20H,30H,22H	; Палитра 16 цветов
+		DB	04H,08H,0CH,3EH,01H,02H,03H,0BH
+;
+SET_PAL:		PUSH	BC
+		AND	0FH
+		LD	B,7FH
+		OUT	(C),A
+		LD	A,E
+		AND	3FH
+		OR	40H
+		OUT	(C),A
+		POP	BC
+		RET
+;
+PALTAB:		DB	00H,01H,02H,03H,17H,10H,20H,30H
+		DB	35H,04H,08H,0CH,1DH,2AH,0BH,00H
+;
+WWOD:		LD	A,(FLAG)
+		AND	A
+		JR	NZ,WWOD1
+		LD	A,(IX+00)
+		INC	IX
+		CP	0FFH
+		RET	NZ
+		LD	A,(IX+00)
+		INC	IX
+		LD	(KOD),A
+		LD	A,(IX+00)
+		INC	IX
+		LD	(COUNT),A
+		LD	A,0FFH
+		LD	(FLAG),A
+WWOD1:		LD	A,(COUNT)
+		DEC	A
+		LD	(COUNT),A
+		JR	Z,WWOD2
+		LD	A,(KOD)
+		RET
+;
+WWOD2:		XOR	A
+		LD	(FLAG),A
+		LD	A,(KOD)
+		RET
+;
+NEXT_LINE:		LD	A,H
+		ADD	A,10H
+		CP	80H
+		JR	NC,NEXT1
+		LD	H,A
+		RET
+;
+NEXT1:		SUB	40H
+		LD	H,A
+		ADD	HL,DE
+		RET
+;=============================================================
+;Подсчет контрольной суммы
+CTRL_SUMM:		LD	HL,4000H
+		LD	BC,0
+		LD	D,H
+		LD	E,L
+C_SUMM:		LD	A,C
+		ADD	A,(HL)
+		LD	C,A
+		LD	A,B
+		ADC	A,0
+		LD	B,A
+		RL	C
+		RL	B	
+		JR	NC,C_SUMM1
+		LD	A,C
+		XOR	2
+		LD	C,A
+C_SUMM1:		LD	B,A
+		INC	HL
+		DEC	DE
+		LD	A,D
+		OR	E
+		JR	NZ,C_SUMM
+		RET
+;Сравнение HL и DE
+CPHLDE:		LD      A,H
+		CP      D
+		RET     NZ
+		LD      A,L
+		CP      E
+		RET
+;Сравнение HL и BC
+CPHLBC:		LD      A,H
+		CP      B
+		RET     NZ
+		LD      A,L
+		CP      C
+		RET
+;============= Работа с регистрами =================================
+;Запись блока в 16 регистров MC6845
+INITI1:		LD	B,10H
+		LD	D,0
+INITI2:		LD	E,(HL)
+		CALL	WR_CRT
+		INC	HL
+		INC	D
+		DJNZ	INITI2
+		RET
+;Данные для MC6845
+MC6845H:		DEFB	6BH,50H,51H,8EH,26H,00H,19H,1EH
+		DEFB	00H,07H,00H,00H,00H,00H,00H,00H
+;Запись в регистр MC6845
+WR_CRT:		PUSH	BC
+		LD	B,0BCH
+		OUT	(C),D
+		INC	B
+		OUT	(C),E
+		POP	BC
+		RET
+;Запись в таймер
+WR_TIMER:		DI
+		PUSH	BC
+		LD	B,0F6H
+		IN	C,(C)
+		PUSH	BC
+		LD	B,0F4H
+		OUT	(C),E
+		LD	A,D
+		AND	3
+		LD	BC,0FABCH
+		OR	C
+		LD	C,A
+		LD	A,(EXTPORT)
+		SET	4,A
+		OUT	(C),A
+		RES	4,A
+		OUT	(C),A
+		POP	BC
+		OUT	(C),C
+		POP	BC
+		RET
+;Запись в часы
+WR_CLOCK:		DI
+		PUSH	BC
+		LD	A,(EXTPORT)
+		SET	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	B,0F4H
+		OUT	(C),D
+		LD	BC,0F602H
+		OUT	(C),C
+		LD	C,0
+		OUT	(C),C
+		LD	B,0F4H
+		OUT	(C),E
+		LD	BC,0F604H
+		OUT	(C),C
+		LD	C,0
+		OUT	(C),C
+		RES	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		POP	BC
+		RET
+;Чтение из часов
+RD_CLOCK:		DI
+		PUSH	BC
+		LD	A,(EXTPORT)
+		SET	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	B,0F4H
+		OUT	(C),D
+		LD	BC,0F602H
+		OUT	(C),C
+		LD	C,0
+		OUT	(C),C
+		LD	BC,0F792H
+		OUT	(C),C
+		LD	BC,0F605H
+		OUT	(C),C
+		LD	B,0F4H
+		IN	E,(C)
+		LD	BC,0F600H
+		OUT	(C),C
+		LD	BC,0F782H
+		OUT	(C),C
+		RES	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	A,E
+		POP	BC
+		RET
+;============== Вывод на экран текста ==============================
+MESSAGE:		LD	A,(DE)
+		AND	A
+		RET	Z
+		CALL	SYMBOL
+		INC	H
+		INC	DE
+		JR	MESSAGE
+;
+SYMBOL:		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		CALL	SYMBOL2
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		RET
+;
+;================ Выводит символ в текущую позицию из [A] ======================
+;
+SYMBOL2:		PUSH	HL
+		LD	L,A
+		LD	H,00
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,HL
+		LD	DE,ALEST
+		ADD	HL,DE
+		LD	DE,BUFSYM1	; Буфер для раскрутки из PGT (8 байт)
+		LD	BC,8
+		LDIR
+		LD	DE,BUFSYM2	; Буфер раскрутки для вывода (32 байта)
+		CALL	SYM0H
+		CALL	SYM0H
+		CALL	SYM0H
+		CALL	SYM0H
+		POP	HL
+		CALL	VRAMADR
+		LD	DE,BUFSYM2
+		CALL	WYWOD
+		INC	HL
+		CALL	WYWOD
+		INC	HL
+		CALL	WYWOD
+		INC	HL
+WYWOD:		LD	B,4
+		PUSH	HL
+WYWOD5:		LD	A,(DE)
+		LD	(HL),A
+		INC	DE
+		SET	7,H
+		RES	6,H
+		LD	A,(DE)
+		LD	(HL),A
+		INC	DE
+		RES	7,H
+		SET	6,H
+		LD	A,H
+		ADD	A,10H
+		LD	H,A
+		DJNZ	WYWOD5
+		POP	HL
+		RET
+;
+; Раскрутка для вывода на экран 16 цветов
+;
+SYM0H:		LD	HL,BUFSYM1
+		LD	B,8
+SYM0H1:		PUSH	BC
+		CALL	SYM1H
+		POP	BC
+		DJNZ	SYM0H1
+		RET
+;
+SYM1H:		LD	A,(PAPER)
+		LD	B,A
+		LD	A,(INK)
+		XOR	B
+		AND	0AAH
+		LD	C,A
+		LD	A,B
+		RL	(HL)
+		JR	NC,SYM2H
+		XOR	C
+SYM2H:		RRC	C
+		RL	(HL)
+		JR	NC,SYM3H
+		XOR	C
+SYM3H:		RRC	C
+		LD	(DE),A
+		INC	DE
+		INC	HL
+		RET
+;
+;================ Преобразует координаты курсора в адрес VRAM ==================
+;
+;Вход:	[HL]= позиция курсора
+;Выход:	[HL]= адрес VRAM
+;
+VRAMADR:		PUSH	DE
+		LD	E,H
+		LD	D,0
+		LD	H,D
+		PUSH	DE
+		LD	E,L
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,DE
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,HL
+		POP	DE
+		EX	DE,HL
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,DE
+		LD	A,H
+		AND	0FH
+ 		OR	40H
+		LD	H,A
+		POP	DE
+		RET
+;
+SET_PAPER:		LD	HL,PAPER
+		JR	INK0
+;
+SET_INK:		LD	HL,INK
+INK0:		LD	E,A
+INK1:		XOR	A
+		BIT	0,E
+		JR	Z,INK4
+		OR	0C0H
+INK4:		BIT	1,E
+		JR	Z,INK5
+		OR	0CH
+INK5:		BIT	2,E
+		JR	Z,INK6
+		OR	30H
+INK6:		BIT	3,E
+		JR	Z,INK7
+		OR	3
+INK7:		LD	(HL),A
+		RET
+;
+;================== Установка цвета бордюра ====================================
+;
+SET_BORDER:		PUSH	BC
+		LD	BC,7F10H
+		OUT	(C),C
+		AND	3FH
+		OR	40H
+		OUT	(C),A
+		POP	BC
+		RET
+;==============================================================
+;Ждем нажатия на клавишу
+KEY:		LD	D,0
+KEY1:		CALL	SNSMAT
+		LD	A,E
+		CP	0FFH
+		RET	NZ
+		INC	D
+		LD	A,D
+		CP	10
+		JR	NZ,KEY1
+		JR	KEY
+;Чтение строки клавиатурной матрицы
+SNSMAT:		LD	BC,0F40EH
+		OUT	(C),C
+		LD	B,0F6H
+		IN	A,(C)
+		AND	30H
+		LD	C,A
+		OR	0C0H
+		OUT	(C),A
+		OUT	(C),C
+		INC	B
+		LD	A,92H
+		OUT	(C),A
+		LD	B,0F6H
+		LD	A,C
+		OR	D
+		OR	40H
+		OUT	(C),A
+		LD	B,0F4H
+		IN	E,(C)
+		LD	B,0F7H
+		LD	A,82H
+		OUT	(C),A
+		DEC	B
+		OUT	(C),C
+		RET
+;***************************************************************
+;============ Здесь начинается работа с файлами ================
+INPFILE:		LD	HL,FCBBUF+12
+		LD	DE,FCBBUF+13
+		LD	(HL),00
+		LD	BC,30
+		LDIR
+		CALL	OPENFILE
+		AND	A
+		SCF
+		RET	NZ
+		LD	IX,FCBBUF
+		LD	E,(IX+1DH)
+		LD	D,(IX+1EH)
+		LD	HL,(FILEST)
+		ADD	HL,DE
+		DEC	HL
+		LD	(FILEEND),HL
+		CALL	READFAT
+		RET	C
+		LD	HL,(FILEST)
+FILEINP4:		LD	DE,(FCBBUF+1BH)
+		LD	A,E
+		CP	0FFH
+		JR	NZ,FILEINP1
+		LD	A,D
+		CP	0FH
+		RET	Z
+FILEINP1:		PUSH	HL
+		CALL	CLUSTER
+		LD	A,(FCBBUF)
+		AND	A
+		LD	BC,02F9H
+		LD	HL,DISKBUF+600H
+		CALL	DSKIO
+		POP	HL
+		RET	C
+		LD	BC,400H
+		LD	DE,DISKBUF+600H
+FILEINP3:		LD	A,(DE)
+		LD	(HL),A
+		PUSH	DE
+		LD	DE,(FILEEND)
+		CALL	CPHLDE
+		POP	DE
+		RET	Z
+		INC	HL
+		INC	DE
+		DEC	BC
+		LD	A,B
+		OR	C
+		JR	NZ,FILEINP3
+		PUSH	HL
+		LD	DE,(FCBBUF+1BH)
+		CALL	FATADR
+		LD	(FCBBUF+1BH),DE
+		POP	HL
+		JR	FILEINP4
+;
+OPENERR:		POP	HL
+		POP	DE
+		LD	A,1
+		RET
+;
+;OPEN	Возвращает	[A]=00 O.K. ,[A] ERROR ,[A] Not found
+;
+OPENFILE:		LD	DE,7
+OPEN4:		PUSH	DE
+		AND	A
+		LD	A,(FCBBUF)
+		LD	BC,01F9H
+		LD	HL,DISKBUF
+		PUSH	HL
+		CALL	DSKIO
+		JR	C,OPENERR
+		POP	HL
+		LD	DE,FCBBUF+1
+		LD	C,16
+OPEN3:		LD	B,11
+		PUSH	DE
+		PUSH	HL
+OPEN2:		LD	A,(DE)
+		CP	(HL)
+		JR	NZ,OPEN1
+		INC	HL
+		INC	DE
+		DJNZ	OPEN2
+		POP	HL
+		POP	DE
+		LD	BC,32
+		LDIR
+		POP	DE
+		XOR	A
+		RET
+;
+OPEN1:		POP	HL
+		LD	DE,32
+		ADD	HL,DE
+		POP	DE
+		DEC	C
+		JR	NZ,OPEN3
+		POP	DE
+		INC	E
+		LD	A,E
+		CP	14
+		JR	NZ,OPEN4
+		LD	A,2
+		RET
+;
+READFAT:		LD	A,(FCBBUF)
+		AND	A
+		LD	BC,03F9H
+		LD	DE,1
+		LD	HL,DISKBUF
+		JP	DSKIO
+;
+;FATADR:	[DE]=номер кластера ,в [DE] выдает адрес след. кластера
+;
+FATADR:		LD	H,D
+		LD	L,E
+		LD	A,L
+		SRL	H
+		RR	L
+		LD	B,H
+		LD	C,L
+		ADD	HL,HL
+		ADD	HL,BC
+		LD	DE,DISKBUF
+		ADD	HL,DE
+		AND	01
+		JR	NZ,FATADR1
+		LD	E,(HL)
+		INC	HL
+		LD	A,(HL)
+		AND	0FH
+		LD	D,A
+		RET
+;
+FATADR1:		INC	HL
+		LD	E,(HL)
+		INC	HL
+		LD	D,(HL)
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		SRL	D
+		RR	E
+		RET
+;
+;CLUSTER:	Выдает в [DE] номер сектора кластера [DE]
+;
+CLUSTER:		EX	DE,HL
+		ADD	HL,HL
+		LD	BC,10
+		ADD	HL,BC
+		EX	DE,HL
+		RET
+;
+;======================================================================;Low Level Disk Operations
+DSKIO:		PUSH	AF
+		CALL	FDCRD
+MOTOFF:		POP	DE
+MOTFOF:		PUSH	AF
+		LD	C,03CH
+		JR	NC,READOPR
+		LD	C,000H
+READOPR:		LD	(IX+000H),078H
+		LD	A,D
+		AND	A
+		JR	NZ,CHGDB
+		LD	(IX+001H),C
+		POP	AF
+		RET
+;
+CHGDB:		LD	(IX+002H),C
+		POP	AF
+		RET
+;===========================================================================;Low level READ operation    A=#DRIVE, B=N, C=MEDIA, DE=SECTOR, HL=DTA
+;
+FDCRD:		CALL	DRVON			;Motor on, sector count, head seek
+		RET	C
+;
+READ1:		CALL	RD1SEC			;Read sector on FDC level
+		RET	C
+READ2:		DEC	B
+		RET	Z
+		CALL	NXTSEC			;count next sector, track
+		JP	READ1
+;
+RD1SEC:		LD	E,015H			;Number of repeats
+RPTSEC:		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		LD	BC,0FB7EH			;Status Reg
+		LD	A,66H			;Command READ DATA MFM
+		CALL	RWCMD
+		DI
+		CALL	CMDOUT			;Out DTL
+		LD	DE,0			;Timeout delay
+TWAIT:		IN	A,(C)
+		JP	M,NTWAIT
+		DEC	E
+		JR	NZ,TWAIT
+		DEC	D
+		JR	NZ,TWAIT
+		DEC	B
+		XOR	A
+		OUT	(C),A			;Motor bit flip
+		EX	(SP),HL			;Terminate FDC command
+		EX	(SP),HL
+		INC	A
+		OUT	(C),A
+		INC	B
+		JR	RDEXIT
+;
+DATAIN:		INC	C			;Data read loop
+		IN	A,(C)
+		LD	(HL),A
+		DEC	C
+		INC	HL
+RDENT:		IN	A,(C)
+		JP	P,RDENT			;No RQM
+NTWAIT:		AND	20H
+		JR	NZ,DATAIN		;NDM
+;
+RDEXIT:		POP	BC
+		POP	DE
+		POP	HL
+		CALL	RESGET
+		LD	A,(RES_ST0)
+		AND	8
+		JR	NZ,NREADY		;Not ready
+		LD	A,(RES_ST1)
+		AND	35H
+		RET	Z			;Normal termination
+		PUSH	AF
+		CALL	SEEKR
+		POP	AF
+		DEC	E
+		JR	NZ,RPTSEC
+		SCF
+		LD	E,A
+		BIT	2,E
+		LD	A,8			;Sector not found
+		RET	NZ
+		BIT	5,E
+		LD	A,4			;CRC Error
+		RET	NZ
+		BIT	0,E
+		LD	A,2			;Disk not formatted
+		RET	NZ
+		LD	A,0CH			;Data overflow
+		RET
+;
+NREADY:		LD	A,2			;Not ready
+		SCF
+		RET
+;===========================================================================;Select & motor on  A=#DRIVE, B=N, C=MEDIA, DE=SECTOR, HL=DTA
+;Return: D=|8/9|1/2|***|***|***|Sid|***|Drv|, E=Sect/Trk HL=DTA, B=N, C=Track
+;External subroutines:  GETWRK,INSERT,DIVREM
+;Work area:  RSECTOR - Sector register value
+;            RTRACK  - Track register value
+;            RDRIVE  - Drive & Side select value
+;
+DRVON:		PUSH	AF
+		PUSH	BC
+		PUSH	HL
+		CALL	GETWRK	;IX=WRK
+		POP	HL
+		POP	BC
+		POP	AF
+		CP	002H
+		JR	C,GODRV
+EREXIT:		LD	A,00CH	;Error: Bad drive name
+		SCF
+		RET
+;
+GODRV:		PUSH	AF
+		LD	A,C
+		CP	0F8H
+		JR	NC,GOMEDIA
+		POP	AF
+		JR	EREXIT	;Error: Unsupported media type
+;
+GOMEDIA:		POP	AF
+		PUSH	IX
+		PUSH	BC
+		PUSH	DE
+		PUSH	AF
+		LD	A,(IX+009H)	;1/2 Hard drive
+		DEC	A
+		JR	NZ,HARD2
+		POP	AF		;1 Hard drive
+		LD	B,000H
+		PUSH	BC
+		CP	(IX+006H)	;Current log drive
+		JR	Z,HARD2
+		LD	(IX+006H),A
+		XOR	A
+		LD	BC,0FA7EH	;Motor port
+		OUT	(C),A		;Motor off
+		LD	(IX+000H),A	;Timer off
+		PUSH	HL
+		CALL	INSERT
+		POP	HL
+HARD2:		POP	AF
+		POP	DE
+		POP	BC
+		POP	IX
+		PUSH	HL
+		PUSH	AF
+		PUSH	BC
+		BIT	1,C
+		LD	C,E
+		LD	B,D
+		LD	DE,00008H
+		JR	NZ,TRACK8
+		INC	DE		;BC=N log sect DE=rect/trk
+TRACK8:		CALL	DIVREM		;HL=N on track  BC=N track
+		LD	A,L
+		INC	A
+		LD	(RSECTOR),A
+		LD	L,C		;L=track
+		POP	BC
+		POP	AF
+		LD	H,A		;A=H=drive 0/1
+		BIT	0,C
+		JR	Z,SINGLE	;single sided
+		SRL	L		;track/2
+		JR	NC,SINGLE
+		OR	004H		;side bit
+SINGLE:		LD	D,A		;D=Drive control data
+		LD	(RDRIVE),A
+		LD	A,C		;A=Media ID
+		RRCA
+		RRCA
+		AND	0C0H
+		OR	D               ;   sec sid
+		LD	D,A		;D=|8/9|1/2|***|***|***|Sid|***|Drv|
+		DI
+		PUSH	BC
+		LD	BC,0FA7EH	;Motor port
+		LD	A,1
+		OUT	(C),A		;Motor on
+		POP	BC
+		LD	A,(IX+000H)
+		AND	A
+		LD	(IX+000H),0FFH	;Timer stop
+		JR	NZ,NOSTOP
+		PUSH	HL
+		LD	HL,00000H	;Motor acceleration delay
+ACCEL:		DEC	HL
+		LD	A,L
+		OR	H
+		JR	NZ,ACCEL
+		POP	HL
+NOSTOP:		PUSH	BC
+		LD	BC,0FB7EH
+		LD	A,3
+		CALL	CMDOUT		;Command SET PARAMETERS
+		XOR	A
+		CALL	PARMOUT		;SRT,HUT
+		LD	A,1
+		CALL	PARMOUT		;HLT,ND
+		POP	BC
+		LD	C,L		;C=Track
+		LD	A,(IX+003H)	;L`st active drive
+		CP	H
+		JR	Z,LASTDRV
+		XOR	001H
+		LD	(IX+003H),A	;Active another drive
+		LD	A,(RTRACK)	;Track register value
+		JR	Z,DRV_A
+		LD	(IX+004H),A	;Track on drive A
+		LD	A,(IX+005H)	;Track on drive B
+		JR	DRV_B
+;
+DRV_A:		LD	(IX+005H),A	;Track on drive B
+		LD	A,(IX+004H)	;Track on drive A
+DRV_B:		LD	(RTRACK),A
+
+LASTDRV:		LD	A,(RTRACK)
+		CP	C		;Head on the current track ?
+		CALL	NZ,SEEKC	;If not then seek
+		POP	HL
+		RET
+;=================================================================NXTSEC:		INC	H
+		INC	H
+		LD	A,(RSECTOR)
+		INC	A
+		LD	(RSECTOR),A
+		BIT	7,D
+		JR	NZ,MEDIAF8
+		CP	00AH
+		RET	C
+MEDIAF8:		CP	009H
+		RET	C
+		LD	A,001H
+		LD	(RSECTOR),A
+		BIT	6,D
+		JR	Z,NOCHSID
+		BIT	2,D
+		JR	NZ,NOCHSID
+		SET	2,D
+		LD	A,D
+		AND	5
+		LD	(RDRIVE),A
+		RET
+;
+NOCHSID:		RES	2,D
+		LD	A,D
+		AND	5
+		LD	(RDRIVE),A
+		INC	C
+		JR	SEEKC
+;===========================================================;SEEKR   - Restore head & seek to track C
+;SEEKC   - Seek head to track C
+;RESTORE - Restore head to track 0
+;
+RESTORE:		XOR	A
+		LD	(RTRACK),A
+		CALL	REST77
+REST77:		PUSH	BC
+		LD	BC,0FB7EH
+		LD	A,7			;RESTORE command
+		CALL	CMDOUT
+		LD	A,(RDRIVE)		;Drive selector
+		CALL	CMDOUT
+		POP	BC
+;Wait for SEEK END
+WSTOP:		PUSH	BC
+		LD	BC,0F5FFH		;8255 PORT B
+WSTP1:		IN	A,(C)
+		BIT	1,A			;DISKINT
+		JR	Z,WSTP1		;Wait for seek end
+		LD	BC,0FB7EH
+		LD	A,8
+		CALL	CMDOUT
+		CALL	CMDOUT
+		CALL	CMDOUT
+		LD	(RTRACK),A
+		POP	BC
+		OR	A			;Clear C flag
+		RET
+
+SEEKR:		BIT	0,E
+		RET	NZ
+		CALL	RESTORE
+SEEKC:		PUSH	BC
+		LD	A,C
+		LD	(RTRACK),A
+		PUSH	AF
+		LD	BC,0FB7EH
+		LD	A,0FH			;SEEK command
+		CALL	CMDOUT
+		LD	A,(RDRIVE)		;Drive selector
+		CALL	CMDOUT
+		POP	AF			;Destination track
+		CALL	CMDOUT
+		POP	BC
+		JR	WSTOP
+;===========================================================;Special subroutines for I8272
+;Not in original MSX DISK BIOS
+;Work Area: PARMTAB,RES_ST0
+;
+PARMOUT:		CALL	PARMGET
+CMDOUT:		PUSH	AF
+		PUSH	AF
+NORQM:		IN	A,(C)
+		ADD	A,A
+		JR	NC,NORQM
+		ADD	A,A
+		JR	NC,CMDOUT1
+		POP	AF
+		POP	AF
+		INC	C
+		IN	A,(C)
+		DEC	C
+		RET
+;
+CMDOUT1:		POP	AF
+		INC	C
+		OUT	(C),A
+		DEC	C
+		EX	(SP),HL
+		EX	(SP),HL
+		POP	AF
+		RET
+;
+PARMGET:		PUSH	HL
+		PUSH	DE
+		LD	HL,PARM_A
+		LD	D,0
+		LD	E,A
+		ADD	HL,DE
+		POP	DE
+		LD	A,(HL)
+		POP	HL
+		RET
+;
+RWCMD:		CALL	CMDOUT
+		LD	A,(RDRIVE)		;Drive & Side selector
+		PUSH	AF
+		CALL	CMDOUT
+		LD	A,(RTRACK)		;Track ID
+		CALL	CMDOUT
+		POP	AF
+		RRCA
+		RRCA
+		AND	1			;Head ID
+		CALL	CMDOUT
+		LD	A,(RSECTOR)		;Sector ID
+		PUSH	AF
+		CALL	CMDOUT
+		LD	A,3			;N
+		CALL	PARMOUT
+		POP	AF			;EOT
+		CALL	CMDOUT
+		LD	A,5			;GPL
+		CALL	PARMOUT
+		LD	A,6			;DTL
+		JR	PARMGET
+;
+RESGET:		PUSH	BC
+		PUSH	DE
+		PUSH	HL
+		LD	E,7
+		LD	HL,RES_ST0
+		LD	BC,0FB7EH
+RESLOOP:		CALL	CMDOUT
+		LD	(HL),A
+		INC	HL
+		DEC	E
+		JR	NZ,RESLOOP
+		POP	HL
+		POP	DE
+		POP	BC
+		RET
+
+FREST:		CALL	RESTORE
+		PUSH	BC
+		LD	BC,0FB7EH
+		LD	A,4
+		CALL	CMDOUT
+		LD	A,(RDRIVE)
+		CALL	CMDOUT
+		CALL	CMDOUT
+		POP	BC
+		AND	10H
+		RET
+;
+;=====================================================================;
+GETWRK:		LD	IX,FDDWRK
+INSERT:		RET
+;
+DIVREM:		LD	HL,00H
+A4932:		LD	A,B
+		LD	B,010H
+		RL	C
+		RLA
+A493B:		RL	L
+		RL	H
+		JR	C,A494E
+		SBC	HL,DE
+		JR	NC,A4946
+		ADD	HL,DE
+A4946:		CCF
+A4947:		RL	C
+		RLA
+		DJNZ	A493B
+		LD	B,A
+		RET
+;
+A494E:		OR	A
+		SBC	HL,DE
+		JR	A4947
+;****************************************************************
+;===============================================================;	Aleste 520 EX setup
+;	ROM version
+;	(c) Patisonic, 1993
+;	Last change 27/09/93
+;****************************************************************
+FLDCOL	EQU	0
+WRDCOL	EQU	15
+TITCOL	EQU	11
+KEYCOL	EQU	10
+MAICOL	EQU	3
+;
+NORCOL	MACRO
+	LD	A,FLDCOL
+	CALL	SET_PAPER
+	LD	A,WRDCOL
+	CALL	SET_INK
+	ENDM
+;
+SELCOL	MACRO
+	LD	A,3
+	CALL	SET_PAPER
+	LD	A,0
+	CALL	SET_INK
+	ENDM
+;
+RSETUP:
+	LD	DE,0A20H	;Запустим часы
+	CALL	WR_CLOCK
+	LD	DE,0B06H
+	CALL	WR_CLOCK
+;
+	LD	D,0		;Читаем 60 байт из часов
+	LD	B,60
+	LD	HL,SETUP
+CLKLOOP:	CALL	RD_CLOCK
+	LD	(HL),A
+	INC	D
+	INC	HL
+	DJNZ	CLKLOOP
+;
+	LD	BC,7DC0H	;Сколько памяти
+	IN	A,(C)
+	PUSH	AF
+	OUT	(C),C
+	IN	A,(C)
+	AND	0F0H
+	CPL
+	SUB	8
+	LD	(LIMIT),A
+	POP	AF
+	OUT	(C),A
+;
+RESTART:	CALL	SETSCR		;Чистим экран
+	LD	A,TITCOL
+	CALL	SET_INK
+	LD	HL,0800H	;X=8, Y=0
+	LD	DE,TITLE	;заголовок
+	CALL	MESSAGE
+;
+	LD	A,MAICOL
+	CALL	SET_INK
+	LD	IX,MOVTAB1
+	LD	HL,SETUP+17H
+	BIT	4,(HL)		;Язык
+	LD	DE,PICT2	;Русское окно
+	LD	(IX+0),LOW LANG_R
+	LD	(IX+1),HIGH LANG_R
+	JR	NZ,RUSSN
+	LD	DE,PICT1	;Английское окно
+	LD	(IX+0),LOW LANG_E
+	LD	(IX+1),HIGH LANG_E
+RUSSN:	CALL	OUTSCR		;ВЫВОДмМ КАРТмНКУ
+	LD	A,KEYCOL
+	CALL	SET_INK
+	LD	DE,T_ESC
+	LD	HL,0213H
+	CALL	MESSAGE
+	LD	DE,T_F1
+	LD	HL,0214H
+	CALL	MESSAGE
+	LD	DE,T_F5
+	LD	HL,0215H
+	CALL	MESSAGE
+	LD	DE,T_MOVE
+	LD	HL,0216H
+	CALL	MESSAGE
+	LD	DE,T_CHG
+	LD	HL,0217H
+	CALL	MESSAGE
+	LD	A,(SETUP+17H)
+	BIT	4,A
+	LD	DE,T_SPC
+	LD	HL,0E17H
+	JR	Z,ENGSPC
+	LD	DE,T_PRB
+	INC	H
+ENGSPC:	CALL	MESSAGE
+	NORCOL
+	CALL	UPDATE
+	LD	HL,PALINITB1
+	CALL	PAL_SET
+	CALL	ENASCR
+;
+START:	SELCOL
+	LD	E,(IX+0)
+	LD	D,(IX+1)
+	LD	L,(IX+2)
+	LD	H,(IX+3)
+	CALL	MESSAGE
+	NORCOL
+START1:	CALL	CLOCK
+	CALL	REFCOL
+	LD	C,060H
+DELAY1:	LD	B,0FFH
+DELAY:	DJNZ	DELAY
+	DEC	C
+	JR	NZ,DELAY1
+STARTC:	LD	D,8
+	CALL	SNSMAT
+	BIT	2,E		;ESC
+	RET	Z		;Выход без записи
+	LD	D,10
+	CALL	SNSMAT
+	BIT	0,E		;F1
+	JR	Z,SAVEXT
+	LD	D,1
+	CALL	SNSMAT
+	BIT	0,E		;LEFT
+	JP	Z,MOVELF
+	LD	D,0
+	CALL	SNSMAT
+	BIT	1,E		;RIGHT
+	JR	Z,MOVERT
+	BIT	0,E		;UP
+	JR	Z,MOVEUP
+	BIT	2,E		;DOWN
+	JR	Z,MOVEDN
+	LD	D,5
+	CALL	SNSMAT
+	BIT	7,E		;SPACE
+	JP	Z,CHANGE
+	JR	START1
+;
+SAVEXT:	LD	HL,SETUP+0EH	;Пишем в часы
+	LD	B,60-0EH
+	LD	D,0EH
+SVLOOP:	LD	E,(HL)
+	CALL	WR_CLOCK
+	INC	HL
+	INC	D
+	DJNZ	SVLOOP
+	RET			;Выход с записью
+
+MOVEUP:	LD	D,2
+	CALL	SNSMAT
+	BIT	5,E
+	JR	Z,CHANGE
+	CALL	ERASE
+	LD	L,(IX+0CH)
+	LD	H,(IX+0DH)
+	PUSH	HL
+	POP	IX
+	JP	START
+;
+MOVEDN:	LD	D,2
+	CALL	SNSMAT
+	BIT	5,E
+	JR	Z,CHGDWN
+	CALL	ERASE
+	LD	L,(IX+0AH)
+	LD	H,(IX+0BH)
+	PUSH	HL
+	POP	IX
+	JP	START
+;
+MOVERT:	CALL	ERASE
+	LD	L,(IX+06H)
+	LD	H,(IX+07H)
+	PUSH	HL
+	POP	IX
+	JP	START
+;
+MOVELF:	CALL	ERASE
+	LD	L,(IX+08H)
+	LD	H,(IX+09H)
+	PUSH	HL
+	POP	IX
+	JP	START
+;
+CHANGE:	LD	L,(IX+4)
+	LD	H,(IX+5)
+	JP	(HL)
+;
+CHGDWN:	LD	L,(IX+4)
+	LD	H,(IX+5)
+	INC	HL
+	INC	HL
+	JP	(HL)
+;
+LNG_SET:	NOP
+	NOP
+	LD	A,(SETUP+17H)
+	XOR	10H
+	LD	(SETUP+17H),A
+	JP	RESTART
+;
+DAY_SET:	JR	DAYSU
+	LD	A,(SETUP+7)
+	DEC	A
+	JR	NZ,DAY_C
+	LD	A,31
+	JR	DAY_C
+DAYSU:	LD	A,(SETUP+7)
+	INC	A
+	CP	32
+	JR	C,DAY_C
+	LD	A,1
+DAY_C:	LD	(SETUP+7),A
+DAY_WR:	LD	D,7
+CLK_WR:	LD	E,A
+	CALL	WR_CLOCK
+	CALL	CLKOUT
+	JP	START
+;
+MON_SET:	JR	MON_SU
+	LD	A,(SETUP+8)
+	DEC	A
+	JR	NZ,MON_C
+	LD	A,12
+	JR	MON_C
+MON_SU:	LD	A,(SETUP+8)
+	INC	A
+	CP	13
+	JR	C,MON_C
+	LD	A,1
+MON_C:	LD	(SETUP+8),A
+MON_WR:	LD	D,8
+	JR	CLK_WR
+;
+YER_SET:	JR	YER_SU
+	LD	A,(SETUP+9)
+	DEC	A
+	JR	YER_SD
+YER_SU:	LD	A,(SETUP+9)
+	INC	A
+YER_SD:	LD	(SETUP+9),A
+	LD	D,9
+	JR	CLK_WR
+;
+HRS_SET:	JR	HRS_SU
+	LD	A,(SETUP+4)
+	DEC	A
+	JP	P,HRS_C
+	LD	A,23
+	JR	HRS_C
+HRS_SU:	LD	A,(SETUP+4)
+	INC	A
+	CP	24
+	JR	C,HRS_C
+	XOR	A
+HRS_C:	LD	(SETUP+4),A
+	LD	D,4
+	JR	CLK_WR
+;
+MIN_SET:	JR	MIN_SU
+	LD	A,(SETUP+2)
+	DEC	A
+	JP	P,MIN_C
+	LD	A,59
+	JR	MIN_C
+MIN_SU:	LD	A,(SETUP+2)
+	INC	A
+	CP	60
+	JR	C,MIN_C
+	XOR	A
+MIN_C:	LD	(SETUP+2),A
+	LD	D,2
+	JR	CLK_WR
+;
+SEC_SET:	NOP
+	NOP
+	XOR	A
+	LD	(SETUP),A
+	LD	D,A
+	JP	CLK_WR
+;
+DRV_SET:	JR	DRV_SU
+	LD	A,(SETUP+0EH)
+	LD	C,A
+	AND	8
+	LD	B,A
+	LD	A,C
+	DEC	A
+	JR	DRV_SD
+DRV_SU:	LD	A,(SETUP+0EH)
+	LD	C,A
+	AND	8
+	LD	B,A
+	LD	A,C
+	INC	A
+DRV_SD:	AND	7
+	OR	B
+	LD	(SETUP+0EH),A
+	AND	7
+	ADD	A,"A"
+	LD	(DRV+1),A
+	JP	START
+;
+RMD_SET:	JR	RMD_SU
+	LD	A,(RMDPAG)
+	DEC	A
+	JP	P,RMD_C
+	LD	A,(LIMIT)
+	DEC	A
+	JR	RMD_C
+RMD_SU:	LD	A,(RMDPAG)
+	INC	A
+	LD	HL,LIMIT
+	CP	(HL)
+	JR	C,RMD_C
+	XOR	A
+RMD_C:	LD	(RMDPAG),A
+	LD	HL,SETUP+0EH
+	SET	3,(HL)
+	JR	NZ,RMD_ON
+	RES	3,(HL)
+	JR	ENDFIL
+RMD_ON:	LD	HL,SETUP+16H
+	LD	A,(LIMIT)
+	LD	C,8
+	ADD	A,C
+	CP	3FH	;1024K
+	JR	Z,RAM1024
+	LD	C,4
+	LD	E,C
+	CP	1FH
+	JR	Z,RAM512	;512K
+	LD	C,2
+	LD	E,6		;256K
+RAM512:	LD	(HL),0
+	DEC	HL
+	DEC	E
+	JR	NZ,RAM512
+RAM1024:	LD	A,(RMDPAG)
+	PUSH	AF
+	RRCA
+	RRCA
+	RRCA
+	AND	7
+	JR	Z,FILZR1
+	LD	B,A
+LPFIL1:	LD	(HL),0FFH
+	DEC	HL
+	DEC	C
+	DJNZ	LPFIL1
+FILZR1:	POP	AF
+	AND	7
+	JR	Z,FILZR
+	LD	B,A
+	XOR	A
+LPFIL2:	SCF
+	RRA
+	DJNZ	LPFIL2
+FILZR:	LD	(HL),A
+	DEC	HL
+	DEC	C
+	JR	Z,ENDFIL
+LPFIL3:	LD	(HL),0
+	DEC	HL
+	DEC	C
+	JR	NZ,LPFIL3
+ENDFIL:	CALL	REFRMD
+	JP	START
+;
+DIS_SET:	NOP
+	NOP
+	LD	A,(SETUP+17H)
+	XOR	20H
+	LD	(SETUP+17H),A
+	CALL	REFDSP
+SETIX:	LD	(IX+0),L
+	LD	(IX+1),H
+	JP	START
+;
+MOD_SET:	JR	MOD_SU
+	LD	A,(SETUP+18H)
+	PUSH	AF
+	AND	0FCH
+	LD	C,A
+	POP	AF
+	DEC	A
+	JR	MOD_SD
+MOD_SU:	LD	A,(SETUP+18H)
+	PUSH	AF
+	AND	0FCH
+	LD	C,A
+	POP	AF
+	INC	A
+MOD_SD:	AND	3
+	OR	C
+	LD	(SETUP+18H),A
+	CALL	REFMOD
+	JR	SETIX
+;
+TXT_SET:	JR	TXT_SU
+	LD	A,(SETUP+19H)
+	PUSH	AF
+	AND	0F0H
+	LD	C,A
+	POP	AF
+	DEC	A
+	JR	TXT_SD
+TXT_SU:	LD	A,(SETUP+19H)
+	PUSH	AF
+	AND	0F0H
+	LD	C,A
+	POP	AF
+	INC	A
+TXT_SD:	AND	0FH
+TXT_ST:	OR	C
+	LD	(SETUP+19H),A
+	CALL	REFCOL
+WAITSPC:	LD	D,5
+	CALL	SNSMAT
+	BIT	7,E
+	JR	Z,WAITSPC
+WAITUD:	LD	D,0
+	CALL	SNSMAT
+	LD	A,E
+	CPL
+	AND	5
+	JR	NZ,WAITUD
+	JP	STARTC
+;
+BCK_SET:	JR	BCK_SU
+	LD	A,(SETUP+19H)
+	PUSH	AF
+	AND	0FH
+	LD	C,A
+	POP	AF
+	SUB	10H
+	JR	BCK_SD
+BCK_SU:	LD	A,(SETUP+19H)
+	PUSH	AF
+	AND	0FH
+	LD	C,A
+	POP	AF
+	ADD	A,10H
+BCK_SD:	AND	0F0H
+	JR	TXT_ST
+;
+KBD_SET:	JR	KBD_SU
+	LD	A,(SETUP+1AH)
+	PUSH	AF
+	AND	0F0H
+	LD	C,A
+	POP	AF
+	DEC	A
+	JR	KBD_SD
+KBD_SU:	LD	A,(SETUP+1AH)
+	PUSH	AF
+	AND	0F0H
+	LD	C,A
+	POP	AF
+	INC	A
+KBD_SD:	AND	0FH
+KBR_ST:	OR	C
+	LD	(SETUP+1AH),A
+	CALL	REFKBD
+	JP	START
+;
+KBR_SET:	JR	KBR_SU
+	LD	A,(SETUP+1AH)
+	PUSH	AF
+	AND	0FH
+	LD	C,A
+	POP	AF
+	SUB	10H
+	JR	KBR_SD
+KBR_SU:	LD	A,(SETUP+1AH)
+	PUSH	AF
+	AND	0FH
+	LD	C,A
+	POP	AF
+	ADD	A,10H
+KBR_SD:	AND	0F0H
+	JR	KBR_ST
+;
+KCL_SET:	NOP
+	NOP
+	LD	A,(SETUP+1BH)
+	XOR	80H
+	LD	(SETUP+1BH),A
+	CALL	REFKCL
+	LD	(IX+0),L
+	LD	(IX+1),H
+	JP	START
+;
+BPT_SET:	JR	BPT_SU
+	LD	A,(SETUP+1BH)
+	PUSH	AF
+	AND	0CFH
+	LD	C,A
+	POP	AF
+	SUB	10H
+	JR	BPT_SD
+BPT_SU:	LD	A,(SETUP+1BH)
+	PUSH	AF
+	AND	0CFH
+	LD	C,A
+	POP	AF
+	ADD	A,10H
+BPT_SD:	AND	30H
+BPV_ST:	OR	C
+	LD	(SETUP+1BH),A
+	CALL	REFBP
+	JP	START
+;
+BPV_SET:	JR	BPV_SU
+	LD	A,(SETUP+1BH)
+	PUSH	AF
+	AND	0F0H
+	LD	C,A
+	POP	AF
+	DEC	A
+	JR	BPV_SD
+BPV_SU:	LD	A,(SETUP+1BH)
+	PUSH	AF
+	AND	0F0H
+	LD	C,A
+	POP	AF
+	INC	A
+BPV_SD:	AND	0FH
+	JR	BPV_ST
+;
+MOU_SET:	JR	MOU_SU
+	LD	A,(SETUP+17H)
+	PUSH	AF
+	AND	0FCH
+	LD	C,A
+	POP	AF
+	AND	3
+	DEC	A
+	JP	P,MOU_SD
+	LD	A,2
+	JR	MOU_SD
+MOU_SU:	LD	A,(SETUP+17H)
+	PUSH	AF
+	AND	0FCH
+	LD	C,A
+	POP	AF
+	AND	3
+	INC	A
+	CP	3
+	JR	C,MOU_SD
+	XOR	A
+MOU_SD:	OR	C
+	LD	(SETUP+17H),A
+	CALL	REFMOU
+	LD	(IX+0),L
+	LD	(IX+1),H
+	JP	START
+;
+PI_SET:	NOP
+	NOP
+	LD	A,(SETUP+18H)
+	XOR	10H
+	LD	(SETUP+18H),A
+	CALL	REFPRI
+	LD	(IX+0),L
+	LD	(IX+1),H
+	JP	START
+;
+PC_SET:	NOP
+	NOP
+	LD	A,(SETUP+18H)
+	XOR	20H
+	LD	(SETUP+18H),A
+	CALL	REFPRC
+	LD	(IX+0),L
+	LD	(IX+1),H
+	JP	START
+;
+SP_SET:	NOP
+	NOP
+	LD	A,(SETUP+1CH)
+	XOR	1
+	LD	(SETUP+1CH),A
+	CALL	REFSPR
+	LD	(IX+0),L
+	LD	(IX+1),H
+	JP	START
+;
+BR_SET:	JR	BR_SU
+	LD	A,(SETUP+1DH)
+	DEC	A
+	JP	P,BR_SD
+	LD	A,6
+	JR	BR_SD
+BR_SU:	LD	A,(SETUP+1DH)
+	INC	A
+	CP	7
+	JR	C,BR_SD
+	XOR	A
+BR_SD:	LD	(SETUP+1DH),A
+	CALL	REFBDR
+	LD	(IX+0),L
+	LD	(IX+1),H
+	JP	START
+;
+BIT_SET:	JR	BIT_SU
+	LD	A,(SETUP+1CH)
+	PUSH	AF
+	AND	0F3H
+	LD	C,A
+	POP	AF
+	SUB	4
+	JR	BIT_SD
+BIT_SU:	LD	A,(SETUP+1CH)
+	PUSH	AF
+	AND	0F3H
+	LD	C,A
+	POP	AF
+	ADD	A,4
+BIT_SD:	AND	0CH
+BIT_ST:	OR	C
+	LD	(SETUP+1CH),A
+	CALL	REFBIT
+	JP	START
+;
+PA_SET:	JR	PA_SU
+	LD	A,(SETUP+1CH)
+	PUSH	AF
+	AND	0CFH
+	LD	C,A
+	POP	AF
+	SUB	10H
+	JR	PA_SD
+PA_SU:	LD	A,(SETUP+1CH)
+	PUSH	AF
+	AND	0CFH
+	LD	C,A
+	POP	AF
+	ADD	A,10H
+PA_SD:	AND	30H
+	BIT	5,A
+	JR	Z,PA_NO
+	SET	4,A
+PA_NO:	OR	C
+	LD	(SETUP+1CH),A
+	CALL	REFPAR
+	LD	(IX+0),L
+	LD	(IX+1),H
+	JP	START
+;
+SB_SET:	JR	SB_SU
+	LD	A,(SETUP+1CH)
+	PUSH	AF
+	AND	03FH
+	LD	C,A
+	POP	AF
+	SUB	40H
+	JR	SB_SD
+SB_SU:	LD	A,(SETUP+1CH)
+	PUSH	AF
+	AND	03FH
+	LD	C,A
+	POP	AF
+	ADD	A,40H
+SB_SD:	AND	0C0H
+	JR	NZ,SB_NO
+	ADD	A,40H
+SB_NO:	OR	C
+	LD	(SETUP+1CH),A
+	CALL	REFSBT
+	LD	(IX+0),L
+	LD	(IX+1),H
+	JP	START
+;
+ERASE:	LD	E,(IX+0)
+	LD	D,(IX+1)
+	LD	L,(IX+2)
+	LD	H,(IX+3)
+	CALL	MESSAGE
+	RET
+;
+UPDATE:	LD	A,(SETUP+0EH)	;BOOT DRIVE
+	AND	7
+	ADD	A,"A"
+	LD	(DRV+1),A
+	LD	DE,DRV
+	LD	HL,2305H
+	CALL	MESSAGE
+;
+	LD	HL,SETUP+0FH	;RAMDISK
+	XOR	A
+	LD	B,8
+CNLOOP2:	LD	C,8
+	LD	E,(HL)
+CNLOOP1:	RRC	E
+	ADC	A,0
+	DEC	C
+	JR	NZ,CNLOOP1
+	INC	HL
+	DJNZ	CNLOOP2
+	LD	(RMDPAG),A
+	CALL	REFRMD
+;
+	LD	A,(SETUP+17H)	;DISPLAY
+	PUSH	AF
+	CALL	REFDSP
+	EX	DE,HL
+	LD	HL,MT1DT
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,2007H
+	CALL	MESSAGE
+;
+	POP	AF		;MOUSE
+	CALL	REFMOU
+	EX	DE,HL
+	LD	HL,MT1MS
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,1F0DH
+	CALL	MESSAGE
+;
+	LD	A,(SETUP+18H)	;MODE
+	CALL	REFMOD
+	EX	DE,HL
+	LD	HL,MT1SM
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,1B08H
+	CALL	MESSAGE
+;
+	LD	A,(SETUP+1AH)	;KEYBOARD
+	CALL	REFKBD
+	LD	DE,KEYD
+	LD	HL,180AH
+	CALL	MESSAGE
+;	CALL	OUTSXY
+	LD	DE,KEYR
+	LD	HL,230AH
+	CALL	MESSAGE
+;
+	LD	A,(SETUP+1BH)	;CLICK
+	PUSH	AF
+	CALL	REFKCL
+	EX	DE,HL
+	LD	HL,MT1CL
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,210BH
+	CALL	MESSAGE
+;
+	POP	AF		;BEEP
+	CALL	REFBP
+	LD	DE,BEEPT
+	LD	HL,180CH
+	CALL	MESSAGE
+	LD	DE,BEEPV
+	LD	HL,230CH
+	CALL	MESSAGE
+;
+	LD	A,(SETUP+18H)	;PRINTER INTERFACE
+	CALL	REFPRI
+	EX	DE,HL
+	LD	HL,MT1PI
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,1C0EH
+	CALL	MESSAGE
+;
+	LD	A,(SETUP+18H)	;PRINTER CODING
+	CALL	REFPRC
+	EX	DE,HL
+	LD	HL,MT1PC
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,1D0FH
+	CALL	MESSAGE
+;
+	LD	A,(SETUP+1CH)	;SERIAL PROTOCOL
+	CALL	REFSPR
+	EX	DE,HL
+	LD	HL,MT1SP
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,0D10H
+	CALL	MESSAGE
+;
+	LD	A,(SETUP+1DH)	;BAUD RATE
+	CALL	REFBDR
+	EX	DE,HL
+	LD	HL,MT1BR
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,2010H
+	CALL	MESSAGE
+;
+	LD	A,(SETUP+1CH)	;SERIAL BITS
+	PUSH	AF
+	CALL	REFBIT
+	LD	DE,BITS
+	LD	HL,0611H
+	CALL	MESSAGE
+;
+	POP	AF		;PARITY
+	PUSH	AF
+	CALL	REFPAR
+	EX	DE,HL
+	LD	HL,MT1PA
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,1211H
+	CALL	MESSAGE
+;
+	POP	AF		;STOP BITS
+	CALL	REFSBT
+	EX	DE,HL
+	LD	HL,MT1SB
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+	LD	HL,2211H
+	CALL	MESSAGE
+;
+	JP	REFCOL
+;
+REFRMD:	LD	A,(SETUP+0EH)
+	BIT	3,A
+	JR	Z,NORAMD
+	LD	A,(RMDPAG)
+	LD	L,A
+	LD	H,0
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	CALL	DECWRD
+	LD	B,H
+	LD	E,"K"
+	JR	YRAMD
+NORAMD:	LD	BC," O"
+	LD	A,"f"
+	LD	E,A
+	LD	HL,SETUP+17H
+	BIT	4,(HL)
+	JR	Z,YRAMD
+	LD	BC,"Вы"
+	LD	A,"к"
+	LD	E,"л"
+YRAMD:	LD	HL,RMD+1
+	LD	(HL),B
+	INC	HL
+	LD	(HL),C
+	INC	HL
+	LD	(HL),A
+	INC	HL
+	LD	(HL),E
+	LD	HL,2106H
+	LD	DE,RMD
+	CALL	MESSAGE
+	RET
+
+REFDSP:	LD	HL,DISP_EM
+	BIT	5,A
+	JR	NZ,DISPM
+	LD	HL,DISP_EC
+DISPM:	BIT	4,A
+	RET	Z
+	LD	DE,16
+	ADD	HL,DE
+	RET
+;
+REFMOD:	LD	HL,SMOD_0
+	AND	3
+	RET	Z
+	LD	B,A
+	LD	DE,13
+MODLP0:	ADD	HL,DE
+	DJNZ	MODLP0
+	RET
+;
+REFKBD:	PUSH	AF
+	LD	HL,KEYD+1
+	CALL	REFKB1
+	POP	AF
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	LD	HL,KEYR+1
+REFKB1:	AND	0FH
+	CALL	DECBYT
+	LD	(HL),C
+	INC	HL
+	LD	(HL),A
+	RET
+;
+REFKCL:	LD	HL,SETONE
+	BIT	7,A
+	JR	NZ,KCLON
+	LD	HL,SETOFE
+KCLON:	LD	A,(SETUP+17H)
+	BIT	4,A
+	RET	Z
+	LD	DE,14
+	ADD	HL,DE
+	RET
+;
+REFBP:	PUSH	AF
+	AND	0FH
+	CALL	DECBYT
+	LD	HL,BEEPV+1
+	LD	(HL),C
+	INC	HL
+	LD	(HL),A
+	POP	AF
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	AND	3
+	ADD	A,"0"
+	LD	(BEEPT+1),A
+	RET
+;
+REFMOU:	LD	HL,MOUSE
+	AND	3
+	JR	Z,MOUSE_R
+	LD	B,A
+	LD	DE,9
+MOUSE_L:	ADD	HL,DE
+	DJNZ	MOUSE_L
+MOUSE_R:	LD	A,(SETUP+17H)
+	BIT	4,A
+	RET	Z
+	LD	DE,27
+	ADD	HL,DE
+	RET
+;
+REFPRI:	BIT	4,A
+	LD	HL,PINT_P
+	JR	Z,PRNP
+	LD	HL,PINT_S
+PRNP:	LD	A,(SETUP+17H)
+	BIT	4,A
+	RET	Z
+	LD	DE,24
+	ADD	HL,DE
+	RET
+;
+REFPRC:	BIT	5,A
+	LD	HL,PCOD_K
+	JR	Z,PRNK
+	LD	HL,PCOD_A
+PRNK:	LD	A,(SETUP+17H)
+	BIT	4,A
+	RET	Z
+	LD	DE,22
+	ADD	HL,DE
+	RET
+;
+REFSPR:	BIT	0,A
+	LD	HL,SPRT_X
+	RET	NZ
+	LD	HL,SPRT_R
+	RET
+;
+REFBDR:	LD	HL,BAUD
+	OR	A
+	RET	Z
+	LD	B,A
+	LD	DE,8
+BDRLP:	ADD	HL,DE
+	DJNZ	BDRLP
+	RET
+;
+REFBIT:	AND	0CH
+	RRCA
+	RRCA
+	ADD	A,"5"
+	LD	(BITS+1),A
+	RET
+;
+REFPAR:	LD	HL,PARIT
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	AND	3
+	JR	Z,PAR_R
+	LD	B,A
+	LD	DE,6
+PAR_L:	ADD	HL,DE
+	DJNZ	PAR_L
+PAR_R:	LD	A,(SETUP+17H)
+	BIT	4,A
+	RET	Z
+	LD	DE,24
+	ADD	HL,DE
+	RET
+;
+REFSBT:	LD	HL,STOP
+	RLCA
+	RLCA
+	DEC	A
+	AND	3
+	RET	Z
+	LD	B,A
+	LD	DE,6
+SBTLP:	ADD	HL,DE
+	DJNZ	SBTLP
+	RET
+;
+REFCOL:	LD	A,(SETUP+19H)
+	PUSH	AF
+	LD	HL,1A09H
+	CALL	REFSQR
+	POP	AF
+	LD	HL,2509H
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+REFSQR:	PUSH	HL
+	AND	0FH
+	LD	E,A
+	LD	A,(SETUP+18H)
+	AND	3
+	LD	A,E
+	JP	PE,SCOL16
+	AND	3
+	LD	E,A
+	LD	D,0
+	LD	HL,SETUP+19H
+	LD	A,(HL)
+	AND	33H
+	LD	(HL),A
+	LD	HL,COLTAB
+	ADD	HL,DE
+	LD	A,(HL)
+SCOL16:	CALL	SET_PAPER
+	POP	HL
+	LD	A,10
+	CALL	SYMBOL
+	LD	A,FLDCOL
+	JP	SET_PAPER
+;
+;Чтение даты и времени
+CLOCK:	LD	D,0CH	;Было обновление?
+	CALL	RD_CLOCK
+	BIT	4,A
+	RET	Z
+	LD	D,0BH	;Запрет обновления
+	CALL	RD_CLOCK
+	OR	80H
+	LD	E,A
+   	CALL	WR_CLOCK
+;
+REFRSH:	LD	D,0
+	LD	B,3
+	LD	HL,SETUP
+RCLK1:	CALL	RD_CLOCK
+	LD	(HL),A
+	INC	HL
+	INC	HL
+	INC	D
+	INC	D
+	DJNZ	RCLK1
+	LD	D,7
+	LD	B,3
+	LD	HL,SETUP+7
+RCLK2:	CALL	RD_CLOCK
+	LD	(HL),A
+	INC	HL
+	INC	D
+	DJNZ	RCLK2
+;
+	LD	D,0BH	;Разрешение обновления
+	CALL	RD_CLOCK
+	AND	7FH
+	LD	E,A
+	CALL	WR_CLOCK
+;
+;Преобразование в десятичный вид
+CLKOUT:	LD	HL,HRS
+	LD	A,(SETUP+4)	;Часы
+	CALL	DECBYT
+	LD	(HL),C
+	INC	HL
+	LD	(HL),A
+	INC	HL
+	INC	HL
+	LD	A,(SETUP+2)	;Минуты
+	CALL	DECBYT
+	LD	(HL),C
+	INC	HL
+	LD	(HL),A
+	INC	HL
+	INC	HL
+	LD	A,(SETUP+0)	;Секунды
+	CALL	DECBYT
+	LD	(HL),C
+	INC	HL
+	LD	(HL),A
+	INC	HL
+	INC	HL
+	LD	A,(SETUP+7)	;Число
+	CALL	DECBYT
+	LD	(HL),C
+	INC	HL
+	LD	(HL),A
+	INC	HL
+	INC	HL
+	LD	A,(SETUP+8)	;Месяц
+	CALL	DECBYT
+	LD	(HL),C
+	INC	HL
+	LD	(HL),A
+	INC	HL
+	INC	HL
+	LD	A,(SETUP+9)	;Год
+	PUSH	HL
+	LD	L,A
+	LD	H,0
+	LD	DE,1980
+	ADD	HL,DE
+	CALL	DECWRD
+	LD	E,H
+	POP	HL
+	LD	(HL),B
+	INC	HL
+	LD	(HL),E
+	INC	HL
+	LD	(HL),C
+	INC	HL
+	LD	(HL),A
+;Вывод на экран
+	LD	DE,DAY
+	LD	L,(IX+0)
+	LD	H,(IX+1)
+	CALL	CPHLDE
+	JR	NZ,NO_DAY
+	PUSH	DE
+	SELCOL
+	POP	DE
+NO_DAY:	LD	HL,1C03H
+	CALL	MESSAGE
+	NORCOL
+	LD	A,"/"
+	LD	HL,1E03H
+	CALL	SYMBOL
+	LD	DE,MONT
+	LD	L,(IX+0)
+	LD	H,(IX+1)
+	CALL	CPHLDE
+	JR	NZ,NO_MON
+	PUSH	DE
+	SELCOL
+	POP	DE
+NO_MON:	LD	HL,1F03H
+	CALL	MESSAGE
+	NORCOL
+	LD	A,"/"
+	LD	HL,2103H
+	CALL	SYMBOL
+	LD	DE,YEAR
+	LD	L,(IX+0)
+	LD	H,(IX+1)
+	CALL	CPHLDE
+	JR	NZ,NO_YER
+	PUSH	DE
+	SELCOL
+	POP	DE
+NO_YER:	LD	HL,2203H
+	CALL	MESSAGE
+	NORCOL
+	LD	DE,HRS
+	LD	L,(IX+0)
+	LD	H,(IX+1)
+	CALL	CPHLDE
+	JR	NZ,NO_HRS
+	PUSH	DE
+	SELCOL
+	POP	DE
+NO_HRS:	LD	HL,1E04H
+	CALL	MESSAGE
+	NORCOL
+	LD	A,":"
+	LD	HL,2004H
+	CALL	SYMBOL
+	LD	DE,MIN
+	LD	L,(IX+0)
+	LD	H,(IX+1)
+	CALL	CPHLDE
+	JR	NZ,NO_MIN
+	PUSH	DE
+	SELCOL
+	POP	DE
+NO_MIN:	LD	HL,2104H
+	CALL	MESSAGE
+	NORCOL
+	LD	A,":"
+	LD	HL,2304H
+	CALL	SYMBOL
+	LD	DE,SEC
+	LD	L,(IX+0)
+	LD	H,(IX+1)
+	CALL	CPHLDE
+	JR	NZ,NO_SEC
+	PUSH	DE
+	SELCOL
+	POP	DE
+NO_SEC:	LD	HL,2404H
+	CALL	MESSAGE
+	NORCOL
+	RET
+;
+;Преобразование слова HL=>B-Тысячи, H-Сотни, C-Десятки, A-Единицы
+DECWRD:	LD	DE,1000
+	CALL	DECCMP
+	LD	B,C
+	LD	DE,100
+	CALL	DECCMP
+	LD	H,C
+	LD	A,L
+	JR	DECBYT
+;
+;Вычисление разряда
+DECCMP:	LD	C,30H
+NEXTD2:	CALL	CPHLDE
+	RET	C
+	SBC	HL,DE
+	INC	C
+	JR	NEXTD2
+;
+;Преобразование байта A=>C-Десятки, A-Единицы
+DECBYT:	LD	C,30H
+NEXTD:	CP	10
+	JR	C,ENDDEC
+	SUB	10
+	INC	C
+	JR	NEXTD
+ENDDEC:	ADD	A,"0"
+	RET
+;
+OUTSCR:	LD	HL,0001H
+	LD	B,24
+SCROLP:	PUSH	HL
+	PUSH	BC
+	CALL	MESSAGE
+	INC	DE
+	POP	BC
+	POP	HL
+	INC	L
+	DJNZ	SCROLP
+	LD	HL,2702H
+	LD	DE,VERTLN
+SCRLP1:	LD	A,(DE)
+	OR	A
+	RET	Z
+	CALL	SYMBOL
+	INC	L
+	INC	DE
+	JR	SCRLP1
+;
+TITLE:	DB	14,15," ALESTE 520 EX SETUP",0
+PICT1:	DB	170
+	DS	38,148
+	DB	143,0
+	DB	131," Language",0
+	DB	131," Current date",0
+	DB	131," Current time",0
+	DB	131," Boot drive",0
+	DB	131," RAM disk",0
+	DB	131," Display type",0
+	DB	131," Screen mode",0
+	DB	131," Screen colors     Text       Back",0
+	DB	131," Keyboard rate    Delay     Repeat",0
+	DB	131," Keyboard click",0
+	DB	131," Beep              Tone     Volume",0
+	DB	131," Mouse",0
+	DB	131," Printer interface",0
+	DB	131," Printer coding",0
+	DB	131," Serial port          Baud rate",0
+	DB	131," Bits      Parity      Stop bits",0
+	DB	147
+	DS	38,148
+	DB	132,0
+	DB	131," ESC  - Quit",0
+	DB	131," F1   - Save settings and quit",0
+	DB	131," F5   - Run diagnostics",0
+	DB	131," ",1,2,3,4," - Move cursor",0
+	DB	131," SHIFT+",3,4," or SPACE - Change field",0
+	DB	144
+     	DS	38,148
+	DB	169,0
+VERTLN:	DS	16,131
+	DB	132
+	DS	5,131
+	DB	0
+PICT2:	DB	170
+	DS	38,148
+	DB	143,0
+	DB	131," Язык",0
+	DB	131," Текущая дата",0
+	DB	131," Текущее время",0
+	DB	131," Загрузочный дисковод",0
+	DB	131," Электронный диск",0
+	DB	131," Дисплей",0
+	DB	131," Режим экрана",0
+	DB	131," Цвета экрана     Текст        Фон",0
+	DB	131," Клавиатура    Задержка     Повтор",0
+	DB	131," Отзвук клавиш",0
+	DB	131," Звуковой сигнал    Тон     Громк.",0
+	DB	131," Мышь",0
+	DB	131," мнтерфейс принтера",0
+	DB	131," Кодировка принтера",0
+	DB	131," Посл. порт            Скорость",0
+	DB	131," Биты    Четность      Стоп-биты",0
+	DB	147
+	DS	38,148
+	DB	132,0
+	DB	131," ESC  - Выход",0
+	DB	131," F1   - Выход с сохранением установок ",0
+	DB	131," F5   - Диагностика",0
+	DB	131," ",1,2,3,4," - Перемещение курсора",0
+	DB	131," SHIFT+",3,4," или ПРОБЕЛ - мзменение поля",0
+	DB	144
+     	DS	38,148
+	DB	169,0
+T_ESC:	DB	"ESC",0
+T_F1:	DB	"F1",0
+T_F5:	DB	"F5",0
+T_MOVE:	DB	1,2,3,4,0
+T_CHG:	DB	"SHIFT+",3,4,0
+T_SPC:	DB	"SPACE",0
+T_PRB:	DB	"ПРОБЕЛ",0
+;
+MOVTAB1:	DW	LANG_E		;ТЕКСТ              1 0
+	DW	30*256+2		;X,Y                3 2
+	DW	LNG_SET		;ФУНКЦмЯ мЗМЕНЕНмЯ  5 4
+	DW	MOVTAB1		;ВПРАВО             7 6
+	DW	MOVTAB1		;ВЛЕВО              9 8
+	DW	MT1YR		;ВНмЗ               B A
+	DW	MT1SB		;ВВЕРХ              D C
+;
+MT1DY:	DW	DAY
+	DW	1C03H
+	DW	DAY_SET
+	DW	MT1MN
+	DW	MT1DY
+	DW	MT1SC
+	DW	MOVTAB1
+;
+MT1MN:	DW	MONT
+	DW	1F03H
+	DW	MON_SET
+	DW	MT1YR
+	DW	MT1DY
+	DW	MT1MI
+	DW	MOVTAB1
+;
+MT1YR:	DW	YEAR
+	DW	2203H
+	DW	YER_SET
+	DW	MT1YR
+	DW	MT1MN
+	DW	MT1SC
+	DW	MOVTAB1
+;
+MT1HR:	DW	HRS
+	DW	1E04H
+	DW	HRS_SET
+	DW	MT1MI
+	DW	MT1HR
+	DW	MT1DR
+	DW	MT1DY
+;
+MT1MI:	DW	MIN
+	DW	2104H
+	DW	MIN_SET
+	DW	MT1SC
+	DW	MT1HR
+	DW	MT1DR
+	DW	MT1MN
+;
+MT1SC:	DW	SEC
+	DW	2404H
+	DW	SEC_SET
+	DW	MT1SC
+	DW	MT1MI
+	DW	MT1DR
+	DW	MT1YR
+;
+MT1DR:	DW	DRV
+	DW	2305H
+	DW	DRV_SET
+	DW	MT1DR
+	DW	MT1DR
+	DW	MT1RM
+	DW	MT1SC
+;
+MT1RM:	DW	RMD
+	DW	2106H
+	DW	RMD_SET
+	DW	MT1RM
+	DW	MT1RM
+	DW	MT1DT
+	DW	MT1DR
+;
+MT1DT:	DW	DISP_EC
+	DW	2007H
+	DW	DIS_SET
+	DW	MT1DT
+	DW	MT1DT
+	DW	MT1SM
+	DW	MT1RM
+;
+MT1SM:	DW	SMOD_0
+	DW	1B08H
+	DW	MOD_SET
+	DW	MT1SM
+	DW	MT1SM
+	DW	MT1BC
+	DW	MT1DT
+;
+MT1TC:	DW	TEXTC
+	DW	1909H
+	DW	TXT_SET
+	DW	MT1BC
+	DW	MT1TC
+	DW	MT1KD
+	DW	MT1SM
+;
+MT1BC:	DW	BACKC
+	DW	2409H
+	DW	BCK_SET
+	DW	MT1BC
+	DW	MT1TC
+	DW	MT1KR
+	DW	MT1SM
+;
+MT1KD:	DW	KEYD
+	DW	180AH
+	DW	KBD_SET
+	DW	MT1KR
+	DW	MT1KD
+	DW	MT1CL
+	DW	MT1TC
+;
+MT1KR:	DW	KEYR
+	DW	230AH
+	DW	KBR_SET
+	DW	MT1KR
+	DW	MT1KD
+	DW	MT1CL
+	DW	MT1BC
+;
+MT1CL:	DW	SETONE
+	DW	210BH
+	DW	KCL_SET
+	DW	MT1CL
+	DW	MT1CL
+	DW	MT1BV
+	DW	MT1KR
+;
+MT1BT:	DW	BEEPT
+	DW	180CH
+	DW	BPT_SET
+	DW	MT1BV
+	DW	MT1BT
+	DW	MT1MS
+	DW	MT1CL
+;
+MT1BV:	DW	BEEPV
+	DW	230CH
+	DW	BPV_SET
+	DW	MT1BV
+	DW	MT1BT
+	DW	MT1MS
+	DW	MT1CL
+;
+MT1MS:	DW	MOUSE
+	DW	1F0DH
+	DW	MOU_SET
+	DW	MT1MS
+	DW	MT1MS
+	DW	MT1PI
+	DW	MT1BV
+;
+MT1PI:	DW	PINT_P
+	DW	1C0EH
+	DW	PI_SET
+	DW	MT1PI
+	DW	MT1PI
+	DW	MT1PC
+	DW	MT1MS
+;
+MT1PC:	DW	PCOD_K
+	DW	1D0FH
+	DW	PC_SET
+	DW	MT1PC
+	DW	MT1PC
+	DW	MT1BR
+	DW	MT1PI
+;
+MT1SP:	DW	SPRT_X
+	DW	0D10H
+	DW	SP_SET
+	DW	MT1BR
+	DW	MT1SP
+	DW	MT1PA
+	DW	MT1PC
+;
+MT1BR:	DW	BAUD
+	DW	2010H
+	DW	BR_SET
+	DW	MT1BR
+	DW	MT1SP
+	DW	MT1SB
+	DW	MT1PC
+;
+MT1BI:	DW	BITS
+	DW	0611H
+	DW	BIT_SET
+	DW	MT1PA
+	DW	MT1BI
+	DW	MOVTAB1
+	DW	MT1SP
+;
+MT1PA:	DW	PARIT
+	DW	1211H
+	DW	PA_SET
+	DW	MT1SB
+	DW	MT1BI
+	DW	MOVTAB1
+	DW	MT1SP
+;
+MT1SB:	DW	STOP
+	DW	2211H
+	DW	SB_SET
+	DW	MT1SB
+	DW	MT1PA
+	DW	MOVTAB1
+	DW	MT1BR
+;
+LANG_E:	DB	" English ",0
+LANG_R:	DB	" Русский ",0
+DISP_EC:	DB	" Color ",0
+DISP_EM:	DB	"  Mono ",0
+	DB	"  Цвет ",0
+	DB	"  Моно ",0
+SMOD_0:	DB	"  640x200x2 ",0
+	DB	"  320x200x4 ",0
+	DB	"  640x200x4 ",0
+	DB	" 320x200x16 ",0
+SETONE:	DB	"   On ",0
+SETOFE:	DB	"  Off ",0
+	DB	"  Вкл ",0
+	DB	" Выкл ",0
+MOUSE:	DB	"    Off ",0
+	DB	"  3-Key ",0
+	DB	"  2-Key ",0
+	DB	"   Выкл ",0
+	DB	" 3-Кноп ",0
+	DB	" 2-Кноп ",0
+PINT_P:	DB	"  Parallel ",0
+PINT_S:	DB	"    Serial ",0
+	DB	" Параллел. ",0
+	DB	" Последов. ",0
+PCOD_K:	DB	"    KOI-8 ",0
+PCOD_A:	DB	"   PC Alt ",0
+	DB	"    КОм-8 ",0
+	DB	" Альтерн. ",0
+SPRT_X:	DB	" Xon/off ",0
+SPRT_R:	DB	" RTS/CTS ",0
+BAUD:	DB	"   300 ",0
+	DB	"   600 ",0
+	DB	"  1200 ",0
+	DB	"  2400 ",0
+	DB	"  4800 ",0
+	DB	"  9600 ",0
+	DB	" 19200 ",0
+PARIT:	DB	" Off ",0
+	DB	" Odd ",0
+	DB	"     ",0
+	DB	" Evn ",0
+	DB	" Нет ",0
+	DB	" Неч ",0
+	DB	"     ",0
+	DB	" Чет ",0
+STOP:	DB	"   1 ",0
+	DB	" 1.5 ",0
+	DB	"   2 ",0
+;
+COLTAB:	DB      0,6,12,3
+RMDPAG:	DB	0
+LIMIT:	DB	0
+
+HRS:	DB	"XX",0
+MIN:	DB	"XX",0
+SEC:	DB	"XX",0
+DAY:	DB	"XX",0
+MONT:	DB	"XX",0
+YEAR:	DB	"XXXX",0
+DRV:	DB	" X: ",0
+RMD:	DB	" XXXK ",0
+TEXTC:	DB	" ",10," ",0
+BACKC:	DB	" ",10," ",0
+KEYD:	DB	" XX ",0
+KEYR:	DB	" XX ",0
+BEEPT:	DB	" X ",0
+BEEPV:	DB	" XX ",0
+BITS:	DB	" X ",0
+SETUP:	DS	60,0
+;
+RSECTOR:	DB	0
+RTRACK:	DB	0
+RDRIVE:	DB	0
+;
+RES_ST0:	DB	0
+RES_ST1:	DB	0
+RES_ST2:	DB	0
+RES_C:	DB	0
+RES_H:	DB	0
+RES_R:	DB	0
+RES_N:	DB	0
+;============= КОНЕЦ SETUP ================================;***********************************************************
+PARM_A:		DB	0DFH	;SRT,HUT
+		DB	3	;HLT,ND
+		DB	25H	;MTOFF
+		DB	2	;NQ2 bytes
+		DB	9	;EOT
+		DB	2AH	;R/W GPL
+		DB	0FFH	;DTL
+		DB	50H	;FORMAT GPL
+		DB	0E5H	;FORMAT DATA
+;
+FDDWRK:		DS	10,0
+ERR_MESS:		DB	'BOOT ERROR. PRESS ANY KEY.',0
+;
+FILEST:		DW	0
+FILEEND:		DW	0
+;
+KOD:		DB	0
+COUNT:		DB	0
+FLAG:		DB	0
+;
+MODES:		DB	0
+INK:		DB	0
+PAPER:		DB	0
+;
+BUFSYM1:		DS	8,0
+BUFSYM2:		DS	32,0
+;
+EXTPORT:        	DB	4
+;
+BIOSFCB:		DB	0,'BIOS    SYS'
+		DS	16,0
+;
+BDOSFCB:		DB	0,'BDOS    SYS'
+		DS	16,0
+;
+FCBBUF:		DS	30H,0
+DISKBUF		EQU	0
+;
+		END
+;
+

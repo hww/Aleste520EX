@@ -1,0 +1,1298 @@
+;FOTON SPECIAL BIOS 19/07/95
+;
+	.Z80
+WORKSPC	EQU	0FCE2H
+EXTRN	ALEST
+;
+;=======================  WORK  VARIABLES  ================================
+;
+XFD90		EQU	0FD90H;	DS 5,0C9H	NMI Hook
+XFD95		EQU	0FD95H;	DS 5,0C9H	Timer Interrupt Hook
+XFD9A		EQU	0FD9AH;	DS 5,0C9H	All Interrupts hook
+XFD9F		EQU	0FD9FH;	DS 5,0C9H	50 Hz Interrupt hook
+XFDA4		EQU	0FDA4H;	DS 5,0C9H	RS-232 Error Interrupt hook
+XFDA9		EQU	0FDA9H;	DS 5,0C9H	RS-232 CTS Interrupt hook
+XFDAE		EQU	0FDAEH;	DS 5,0C9H	RS-232 RxRDY Interrupt hook
+XFDB3		EQU	0FDB3H;	DS 5,0C9H	RS-232 TxRDY Interrupt hook
+XFDB8		EQU	0FDB8H;	DS 5,0C9H	Centronics READY Interrupt hook
+XFDBD		EQU	0FDBDH;	DS 5,0C9H	Keyboard Interrupt hook
+XFDC2		EQU	0FDC2H;	DS 5,0C9H	Mouse move hook
+XFDC7   	EQU     0FDC7H; DS 5,0C9H       BREAK Interrupt hook
+XFDCC   	EQU     0FDCCH; DS 5,0C9H       INKEY hook
+XFDD1		EQU	0FDD1H;	DS 5,0C9H	INPUT hook
+XFDD6		EQU	0FDD6H;	DS 5,0C9H	OUTPUT hook
+XFDDB		EQU	0FDDBH;	DS 5,0C9H	LPTOUT hook
+;
+VRAMADR		EQU	0FDE0H;	JP VRAMADR0
+WYWOD		EQU	0FDE3H;	JP WYWOD_N
+WIDTH		EQU	0FDE6H;	JP WIDTH80
+ROLL3		EQU	0FDE9H;	JP ROLL3_0
+ROLSTR		EQU	0FDECH;	JP ROLSTR_0
+CURON		EQU	0FDEFH;	JP CURON80
+CUROFF		EQU	0FDF2H;	JP CUROFF80
+;
+EXTPORT		EQU	0FDF5H;	content #FABF
+;                D0 - VRAM Bank 0/1 (64K)
+;		 D1 - MODE 0-Norm ,1-High resolution
+;		 D2 - MAPMOD 0-Amstrad ,1-Yamaha mapper
+;		 D3 - MAP Page 0/1 (256K)
+;		 D4 - 580WI53
+;		 D5 - 0-AY8910 ,1-512WI1
+;
+SPCPORT		EQU	0FDF6H;	content 7FFFH D7=1, D6=0
+;		 D0,D1 - screen mode  0-160*200, 1-320*200, 2-640*200
+;		 D2    - ROM page on 0000h        0-On, 1-Off
+;		 D3    - ROM page on C000h        0-On, 1-Off
+;		 D4    - RUS LED	          1-On
+;		 D5    - SCREEN ON	          1-On
+;
+VDPREGS		EQU	0FDF7H;	DS 14,00	registers of MC6845
+;
+;=====================  SCREEN  ====================================	
+;
+WUP		EQU	0FE05H;	DB 00H	uper edge of screen
+WLEFT		EQU	0FE06H;	DB 00H	left edge of screen
+WDOWN		EQU	0FE07H;	DB 18H	bottom edge of screen
+WRIGHT		EQU	0FE08H;	DB 4FH	right edge of screen
+CSRY		EQU	0FE09H;	DB 00H	Y cursor loc
+CSRX		EQU	0FE0AH;	DB 00H	X cursor loc
+PGTPAGE		EQU	0FE0BH;	DB 08H	page PGT
+PGTADR		EQU	0FE0CH;	DW PGTTAB	Address PGT	
+SCRMOD		EQU	0FE0EH;	DB 00H	screen mode
+;			      	   0	640 * 200  2 color
+;				   1	320 * 200  4 color
+;				   2	640 * 200  4 coor
+;				   3	320 * 200 16 color
+MODES		EQU	0FE0FH;	DB 00H	Mode character output
+;				   bit 0 - underline
+;				   bit 1 - negative
+;				   bit 2 - wide
+;				   bit 3 - semitransp
+SYMMOD		EQU	0FE10H;	DB 00H	input mode
+;				   0 NORMAL
+;				   1 AND
+;				   2 OR
+;				   3 XOR
+BASE		EQU	0FE11H;	DW 0000H	Logical screen begin adress
+VPAGE		EQU	0FE13H;	DB 00H	Number pages for output
+INK		EQU	0FE14H;	DB 01H	Color of char
+PAPER		EQU	0FE15H;	DB 00H	Color of backround
+BORDER		EQU	0FE16H;	DB 00H	Color of border
+;
+BUFSYM1		EQU	0FE17H;	DS 08H,0	Buffer of  PGT scroll
+BUFSYM2		EQU	0FE1FH;	DS 20H,0	Buffer of char scroll
+;
+SAVECUR		EQU	0FE3FH;	DW 0000H	SAVE area for cursor
+ESCBUF		EQU	0FE41H;	DS 08H	Buffer of ESC sequence
+ESCADR		EQU	0FE49H;	DW ESCBUF	Address at ESCBUF
+ESCCNT		EQU	0FE4BH;	DB 00H	Count of ESC sequence
+GRPHED		EQU	0FE4CH;	DB 00H	not 0 - output pseudo-graphics
+;
+MODECUR		EQU	0FE4DH;	DB 0A0H	Cursor mode
+;				   bit5 0 - Sound for keyboard OFF
+;				   bit6 0 - INSERT OFF
+;				   bit7	0 - CURSOR OFF
+CURINK		EQU	0FE4EH;	DB 0FFH	Color of cursor
+BUFCUR		EQU	0FE4FH;	DS 20H,0	Bufer of cursor
+CURNORM		EQU	0FE6FH;	DS 08H,0FFH	Normal cursor look like
+CURINS		EQU	0FE77H;	DS 08H,0FFH	Inster cursor look like
+;
+;================  PALLETTE  ======================================
+;
+PALTAB		EQU	0FE7FH;	DS 10H,COLORS	Palette tables
+;
+;================  KEYBOARD  =======================================
+;
+OLDKEY		EQU	0FE8FH;	DS 11,0FFH	Last state KEYBOARD
+NEWKEY		EQU	0FE9AH;	DS 11,0FFH	New state KEYBOARD
+;
+KEYBUF		EQU	0FEA5H;	DS 40,0	Pressed characters	
+;
+INTFLAG		EQU	0FECDH;	DB 00	=00 ,if it is not frame's interrupt
+;
+SCNCNT		EQU	0FECEH;	DB 01H	Counter of scan KEYBOARD
+REPCNT		EQU	0FECFH;	DB 01H	Counter of autorepeat
+BEEPCNT		EQU	0FED0H;	DB 00H	Counter of sound KBD
+;
+GETKEY		EQU	0FED1H;	DW KEYBUF	Where to put input key
+PUTKEY		EQU	0FED3H;	DW KEYBUF	Where to take next key
+;
+TABCOD1		EQU	0FED5H;	DB  08, DW	NORMTAB	code keys table
+TABCOD2		EQU	0FED8H;	DB  08, DW	SHIFTAB	code key table for SHIFT
+TABCOD3		EQU	0FEDBH;	DB  08, DW	RUSTAB	Address of table codes RUS. keys
+TABCOD4		EQU	0FEDEH;	DB  08, DW	SHRUSTAB Address of table keys SHIFT-RUS. 
+;
+SCAN		EQU	0FEE1H;	DB 00H	Start value for SCNCNT
+REPEAT		EQU	0FEE2H;	DB 00H	Start value for REPCNT
+DELAY		EQU	0FEE3H;	DB 00H	autorepeat delay
+;
+KEYMOD		EQU	0FEE4H;	DB 00H	Special keys state
+;				bit 3 - CAPS
+;				bit 4 - RUS
+;				bit 5 - SHIFT
+;				bit 6 - CTRL
+;				bit 7 - ALT(COPY)
+;
+;=================  MOUSE  =====================================
+;
+MOUSFLG		EQU	0FEE5H;	DB 00 - MOUSE OFF, <>00 - MOUSE ON
+;
+MOUS_K		EQU	0FEE6H;	DB 0	buttons state
+MOUS_Y		EQU	0FEE7H;	DB 0 - Relative signed X
+MOUS_X		EQU	0FEE8H;	DB 0 - Relative signed Y
+;
+MOUS_Y1		EQU	0FEE9H;	DW 0 - Absolute X
+MOUS_X1		EQU	0FEEBH;	DW 0 - Absolute Y
+;
+MOUS_YMAX	EQU	0FEEDH;	DW 640
+MOUS_XMAX	EQU	0FEEFH;	DW 200
+;
+MOUS_SCLY	EQU	0FEF1H;	DB 0
+MOUS_SCLX	EQU	0FEF2H;	DB 0
+;
+MOUS_TIP	EQU	0FEF3H;	DB 0 - PC Mouse, MS Mouse
+;
+;===============================================================================
+;
+INT_CNT		EQU	0FEF4H;	DW 0	counter of frames
+TIMER		EQU	0FEF6H;	DW 0	interval timer us (microseconds).
+;
+BASE0		EQU	0FEF8H;	DW 0	base address of screen 0
+BASE1		EQU	0FEFAH;	DW 0	base address of screen 1
+BASE2		EQU	0FEFCH;	DW 0	base address of screen 2
+BASE3		EQU	0FEFEH;	DW 0	base address of screen 3
+;
+;========================= MEMORY FOR RS-232 ======================================
+;
+RX_BUF		EQU	0FF00H;	DS 40H	Reciver buffer
+TX_BUF		EQU	0FF40H;	DS 40H	Transmitter buffer
+RX_HEAD		EQU	0FF80H;	DW RX_BUF
+RX_TAIL		EQU	0FF82H;	DW RX_BUF
+TX_HEAD		EQU	0FF84H;	DW TX_BUF
+TX_TAIL		EQU	0FF86H;	DW TX_BUF
+RS_COM		EQU	0FF88H;	DB 0	Command register
+RS_STAT		EQU	0FF89H;	DB 0	Status register
+RS_MODE		EQU	0FF8AH;	DB 0	0-RTS/CTS, 1-XON/XOFF
+RX_XOFF		EQU	0FF8BH;	DB 0	0FFH - XOFF set
+TX_XOFF		EQU	0FF8CH;	DB 0	0FFH - XOFF set
+;
+;	????????????????????????
+;
+BIOSSLT		EQU	0FF9DH;	DB 8	slot number with BIOS
+;
+SLTSP		EQU	0FF9EH;	DW SLTWRK	Pointer to SLTWRK
+SLTWRK		EQU	0FFA0H;	DS 40H	Buffer of stack
+			      ; 	 for writing numbers of pages
+			      ;		 in functions SAVESLT, LOADSLT	
+PAGEMAP		EQU	0FFE0H;	DS 20H	the map:
+		      	      ;	 pages in sequence
+			      ;	 each byte:
+			      ;	 0 - free page
+			      ;	 1 - page VRAM
+			      ;	 2 - page ROM
+			      ;	 3 - system page
+			      ;	 4 - user's page
+			      ;	 5 - resident page
+			      ;	 6 - page for RAMDISK
+;
+L0000:	DI
+	JP	INIT		;Functio:	init BIOS
+				;changes:::	All 		
+;
+L0004:	DW	ALEST		;adres PGT в BIOS
+L0006:	DW	0
+;
+L0008:	JP	INKEY		;Functio:	Input char
+	NOP			;Outpu:		[A]=char
+				;changes:::	not
+;
+L000C:	JP	RDSLT		;Functio:	Read mem
+	NOP			;Inpu:		[A]=page number ,[HL]=adres
+				;Outpu:		[A]=data
+				;changes::	All, set DI
+;
+L0010:	JP	INPUT		;Functio:	Input symbol
+	NOP			;Outpu:		[A]=symbol's code
+				;changes::	Not
+;
+L0014:	JP	WRTSLT		;Functio:	Write to mem
+	NOP			;Inpu:		[A]=page number ,[HL]=adres
+				;		[E]=data
+				;changes:::	All, set DI
+;			
+L0018:	JP	SYMBOL		;Functio:	Symbol output to screen
+	NOP			;Inpu:		[A]=code of symbol
+				;changes:::	Not
+;
+L001C:	JP	CALSLT		;Functio:	Interpage CALL
+	NOP			;Inpu:		[HY]=page number
+				;		[IX]=adres of function
+				;changes:::	'regs , IX, set DI
+;
+L0020:	JP	CPHLDE		;Functio:	Compare [HL] and [DE]
+	NOP			;Outpu:		FLAGS
+				;changes:::	AF
+;
+L0024:	JP	ENASLT		;Functio:	Set page number
+	NOP			;Inpu:		[A]=page number
+				;		[HL]=adres
+				;Outpu:		[E]=number of old page
+				;changes:::	All, set DI
+;
+L0028:	JP	CPHLBC		;Functio:	Compare [HL] and [BC]
+	NOP			;Outpu:		FLAGS
+				;changes:::	AF
+;
+L002C:	JP	SAVESLT		;Functio:	Remember map of memory
+	NOP			;changes:::	AF
+;
+L0030:	JP	CALLF		;Functio:	Interpage call of function
+	NOP			;		RST 30H,DB page number,DW adres
+				;changes:::	'regs,IX, set DI
+;
+L0034:	JP	LOADSLT		;Functio:	set map of memory,
+	NOP			;		remembered by 002CH
+				;changes:::	AF
+;
+L0038:	JP	INT38		;Functio:	Interrupt
+;
+;	HARDWARE FUNCTIONS
+;
+L003B:	LD	A,13H		;Functio:	Return in [A] version number
+	RET
+;
+L003E:	RET
+	NOP
+	NOP
+;
+L0041:	RET
+	NOP
+	NOP
+;
+L0044:	RET
+	NOP
+	NOP
+;
+L0047:	JP	WR_PSG		;Functio:	Write to AY8910
+				;Inpu:		[D]=register, [E]=data
+				;changes:::	AF
+;
+L004A:	JP	RD_PSG		;Functio:	Read AY8910
+				;Inpu:		[D]=register
+				;Outpu:		[E]=data
+				;changes:::	AF
+;
+L004D:	JP	SET_TIMER	;Functio:	Set interval timer
+				;		[HL] time (us)
+				;changes:::	Not
+;
+L0050:	JP	GET_TIMER	;Functio:	Get interval timer 
+				;		[HL] time (us)
+				;changes:::     Not
+;
+L0053:	JP	WR_CLOCK	;Functio:	Write RTC
+				;Inpu:		[D]=reg, [E]=data
+				;changes:::	AF
+;
+L0056:	JP	RD_CLOCK	;Functio:	Read RTC
+				;Inpu:		[D]=reg
+				;Outpu:		[E]=[A]=data
+				;changes:::	AF
+;
+L0059:	JP	WR_CRT		;Functio:	Write MC6845
+				;Inpu:		[D]=reg, [E]=data
+				;changes:::	Not
+;
+L005C:	JP	RD_CRT		;Functio:	Read MC6845
+				;Inpu:		[D]=reg
+				;Outpu:		[E]=data
+				;changes:::	Not
+;
+L005F:	JP	WAIT		;Functio:	wait V_SYNC
+				;changes:::	AF
+;
+L0062:	JP	CHGRUS		;Functio:	Set the LED-RUS state
+	NOP			;Inpu:		[A]=00 - Off, <>00 - On
+				;changes:::	AF
+;
+L0066:	JP	NMI		;Functio:	NMI
+;
+;	SCREEN FUNCTIONS
+;
+L0069:	JP	SCR_INIT	;Functio:	init screen
+				;changes:::	All
+;
+L006C:	JP	DIS_SCR		;Functio:	Screen OFF
+				;changes:::	AF
+;
+L006F:	JP	ENA_SCR		;Functio:	Screen ON
+				;changes:::	AF
+;
+L0072:	JP	WR_SYMBOL	;Functio:	Draw sybol at loc [HL]
+				;Inpu:		[A]=symbol, [H]=X, [L]=Y
+				;changes:::	AF
+;
+L0075:	JP	MESSAGE1	;Functio:	Line print [DE] up to 0
+				;		Special codes (TAB, CR, ..) do not work,	
+				;		to position [HL]
+				;changes:::	All
+;
+L0078:	JP	SCROLL		;Functio:	Screen scroll
+				;Inpu:		[B]=00 bottom, other case up
+				;changes:::	All
+;
+L007B:	JP	MESSAGE		;Functio:	Print line from [DE] up to 0
+				;		all codes (DEL, TAB, CR, ..) works,
+				;		at the current position of cursor
+				;changes:::	All
+;
+L007E:	JP	CLS		;Functio:	clear screen by bacfground color
+				;changes:::	All
+;
+L0081:	JP	SET_SCRMOD	;Functio:	Set screen mode
+				;Inpu:		[A]=mode,[B]=color of text
+				;			 [C]=color of background
+				;changes:::	All
+;
+L0084:	JP	GET_SCRMOD	;Functio:	Get screen mode
+				;Outpu:		[A]=screen mode
+				;changes:::	Not
+;
+L0087:	JP	SET_FONT	;Functio:	Font type
+				;Inpu:		[A]=type
+				;bit 0 - underline
+				;bit 1 - negative
+				;bit 2 - wide
+				;bit 3 - semitransparent
+				;changes:::	Not
+;
+L008A:	JP	GET_FONT	;Functio:	Get type of font
+				;Outpu:		[A]=type
+				;changes:::	Not
+;
+L008D:	JP	SET_MODE	;Functio:	Set mode of output
+				;Inpu:		[A]=00	NORMAL
+				;		    01	AND
+				;		    02	OR
+				;		    03	XOR	
+				;changes:::	All
+;
+L0090:	JP	GET_MODE	;Functio:	Get mode of output
+				;Outpu:		[A]=mode
+				;changes:::	Not
+;
+L0093:	JP	SET_SIZE	;Functio:	Set screen size
+				;Inpu:		[H]=X, [L]=Y left top
+				;		[B]=height, [C]=width
+				;changes:::	All
+;
+L0096:	JP	GET_SIZE	;Functio:	get size of screen
+				;Outpu:		[HL],[BC] same
+				;changes:::	HL,BC,AF
+;
+L0099:	JP	SET_PGT		;Functio:	Set address of PGT
+				;Inpu:		[HL]=adres PGT
+				;		[A] =page number
+				;changes:::	Not
+;
+L009C:	JP	GET_PGT		;Functio:	Get address PGT
+				;Outpu:		[HL]=adres PGT
+				;		[A]= page number
+				;changes:::	Not
+;
+L009F:	RET
+	NOP
+	NOP
+;
+L00A2:	JP	BEEP		;Functio:	BEEP
+				;changes:::	All
+;
+L00A5:	JP	SET_VPAGE	;Functio:	Set screen's page numbers
+				;Inpu:		[A]=bit0-1 logic poge
+				;		    bit4-5 physic page
+				;changes:::	All
+;
+L00A8:	JP	GET_VPAGE	;Functio:	Get screen's page numbers
+				;Outpu:		[A]=page numbers
+				;changes:::	Not
+;
+L00AB:	JP	SET_BASE	;Functio:	Set address of screen's start
+				;Inpu:		[HL]=adres 
+				;changes:::	All
+;
+L00AE:	JP	GET_BASE	;Functio:	Get address of screen's start
+				;Outpu:		[HL]=adres 
+				;changes:::	Not
+;
+L00B1:	JP	SET_INK		;Functio:	Set synmbol color
+				;Inpu:		[A]=color (0-15)
+				;changes:::	All
+;
+L00B4:	JP	GET_INK		;Functio:	Get symbol color
+				;Outpu:		[A]=color
+				;changes:::	All
+;
+L00B7:	JP	SET_PAPER	;Functio:	Set background color
+				;Inpu:		[A]=color (0-15)
+				;changes:::	All
+;
+L00BA:	JP	GET_PAPER	;Functio:	Get backround color
+				;Outpu:		[A]=color
+				;changes:::	All
+;
+L00BD:	JP	SET_BORDER	;Functio:	Set border color
+				;Inpu:		[A]=color (0-63)
+				;changes:::	All
+;
+L00C0:	JP	GET_BORDER	;Functio:	Get border color
+				;Outpu:		[A]=color
+				;changes:::	Not
+;
+;	PALETTE FUNCTIONS
+;
+L00C3:	JP	PAL_INIT	;Functio:	init palette
+				;changes:::	All
+;
+L00C6:	JP	SET_PAL		;Functio:	Set palette
+				;Inpu:		[A]=color number, [E]=pallette
+				;changes:::	AF
+;
+L00C9:	JP	GET_PAL		;Functio:	Get palette
+				;Inpu:		[A]=color number
+				;Outpu:		[E]=pellette 
+				;changes:::	AF
+;
+;	CURSOR FUNCTIONS
+;
+L00CC:	JP	CUR_INIT	;Functio:	init cursor
+				;changes:::	All
+;
+L00CF:	JP	ENA_CUR		;Functio:	Cursor ON
+				;changes:::	AF
+;
+L00D2:	JP	DIS_CUR		;Functio:	Cursor OFF
+				;changes:::	AF
+;
+L00D5:	JP	INSERT_ON	;Functio:	Insert ON
+				;changes:::	AF
+;
+L00D8:	JP	INSERT_OFF	;Functio:	Insert OFF
+				;changes:::	AF
+;
+L00DB:	JP	SET_CUR		;Functio:	Set cursor location
+				;Inpu:		[H]=X, [L]=Y
+				;changes:::	Not
+;
+L00DE:	JP	GET_CUR		;Functio:	Get cursor location
+				;Outpu:		[H]=X, [L]=Y
+				;changes:::	Not
+;
+L00E1:	JP	SET_CURINK	;Functio:	Set cursor color
+				;Inpu:		[A]=color
+				;changes:::	Not
+;
+L00E4:	JP	GET_CURINK	;Functio:	Get cursor color
+				;Outpu:		[A]=color
+				;changes:::	Not
+;
+L00E7:	JP	PLACE_CUR	;Functio:	Cursor ON
+				;changes:::	All
+;
+L00EA:	JP	ERASE_CUR	;Functio:	Cursor OFF
+				;changes:::	All
+;
+;	KEYBOARD FUNCTIONS
+;
+L00ED:	JP	KEY_INIT	;Functio:	init KBD
+				;changes:::	All
+;
+L00F0:	JP	TST_KEYBUF	;Functio:	Check KEY buffer
+				;Outpu:		ZF=1, if empty
+				;changes:::	AF
+;
+L00F3:	JP	CLR_KEYBUF	;Functio:	Clear keys buffer
+				;changes:::	HL
+;
+L00F6:	JP	READ_KEY	;Functio:	Keyboard Input 
+				;Outpu:		[A]=[C] - virtual KEY code
+				;		[B]=bit 3 - CAPS
+				;		    bit 4 - RUS
+				;		    bit 5 - Shift
+				;		    bit 6 - Ctrl
+				;		    bit 7 - Alt(Copy)
+				;		[A]=[C]=00,ZF=1, if not pressed
+				;changes:::	Not
+;
+L00F9:	JP	TEST_KEY	;Functio:	Check key state
+				;Inpu:		[A]=key
+				;Outpu:		ZF=1 pressed
+				;changes:::	AF
+;
+L00FC:	JP	BREAK		;Functio:	chrck CTRL+C
+				;Outpu:		CF=1, if pressed
+				;changes:::	AF
+;
+L00FF:	JP	SET_NORM	;Functio:	Set address of KEY table
+				;Inpu:		[HL]=adres
+				;changes:::	Not
+;
+L0102:	JP	GET_NORM	;Functio:	Get address of KEY table 
+				;Outpu:		[HL]=adres
+				;changes:::	Not
+;
+L0105:	JP	SET_SHIFT	;Functio:	Set address of KEY table
+				;Inpu:		[HL]=adres
+				;changes:::	Not
+;
+L0108:	JP	GET_SHIFT	;Functio:	Get address of KEY table 
+				;Outpu:		[HL]=adres
+				;changes:::	Not
+;
+L010B:	JP	SET_RUS		;Functio:	Set Address of KEY table 
+				;Inpu:		[HL]=adres
+				;changes:::	Not
+;
+L010E:	JP	GET_RUS		;Functio:	Get address of KEY table 
+				;Outpu:		[HL]=adres
+				;changes:::	Not
+;
+L0111:	JP	SET_SHRUS	;Functio:	Set Address of KEY table 
+				;Inpu:		[HL]=adres
+				;changes:::	Not
+;
+L0114:	JP	GET_SHRUS	;Functio:	Get address of KEY table 
+				;Outpu:		[HL]=adres
+				;changes:::	Not
+;
+L0117:	JP	SET_SCAN	;Functio:	Set scanner counter
+				;Inpu:		[A]=value
+				;changes:::	Not
+;
+L011A:	JP	GET_SCAN	;Functio:	Get scanner counter
+				;Outpu:		[A]=value
+				;changes:::	Not
+;
+L011D:	JP	SET_REPT	;Functio:	Set repeat counter
+				;Inpu:		[A]=value
+				;changes:::	Not
+;
+L0120:	JP	GET_REPT	;Functio:	Get repeat counter
+				;Outpu:		[A]=value
+				;changes:::	Not
+;
+L0123:	JP	SET_DELAY	;Functio:	Set delay counter
+				;Inpu:		[A]=value
+				;changes:::	Not
+;
+L0126:	JP	GET_DELAY	;Functio:	Get delay counter
+				;Outpu:		[A]=value
+				;changes:::	Not
+;
+L0129:	JP	CLICKON		;Functio:	key sound ON
+				;changes:::	AF
+;
+L012C:	JP	CLICKOFF	;Functio:	key sound OFF
+				;changes:::	AF
+;
+;	PRINTER DRIVER
+;
+L012F:	JP	LPTOUT		;Functio:	print char
+				;Inpu:		[A]=char
+				;Outpu:		CF=1, if pressed Ctrl+C
+				;changes:::	AF
+;
+L0132:	JP	LPTSTT		;Functio:	Check ready
+				;Outpu:		[A] , ZF=1, not ready
+				;		[A]=00, ZF=0, ready
+				;changes:::	AF
+;
+;	MOUSE DRIVER
+;
+L0135:	JP	MOUS_INIT	;Functio:	Init MOUSE
+				;Inpu:		[A]=type: 01-MS, 02-PC
+				;changes:::	All
+;
+L0138:	JP	MOUS_ON		;Functio:	Mouse ON
+				;changes:::	AF
+;
+L013B:	JP	MOUS_OFF	;Functio:	Mouse OFF
+				;changes:::	AF
+;
+L013E:	JP	GET_MOUS	;Functio:	Get state MOUSE
+				;Outpu:		[HL]=X, [DE]=Y  Absolute
+				;		[A]=bit 0 - Left button
+				;		    bit 1 - Medium button
+				;		    bit 2 - Right button
+				;		    bit 3 - CAPS
+				;		    bit 4 - RUS
+				;		    bit 5 - Shift
+				;		    bit 6 - Ctrl
+				;		    bit 7 - Alt(Copy)
+				;changes:::	All
+;
+L0141:	JP	SET_MLIM	;Functio:	Set border of coordinates,
+				;		cur. mouse loc = 00
+				;Inpu:		[HL]=Xmax, [DE]=Ymax
+				;changes:::	Not
+;
+L0144:	JP	GET_MLIM	;Functio:	Get border of coordinates
+				;Outpu:		[HL]=Xmax, [DE]=Ymax
+				;changes:::	Not
+;
+L0147:	JP	SET_MSCAL	;Functio:	Set mouse scale
+				;Inpu:		[H]=X scale
+				;		[L]=Y scale
+				;changes:::	Not
+;
+L014A:	JP	GET_MSCAL	;Functio:	Get mouse Scale		
+				;Outpu:		[H]=X scale	
+				;		[L]=Y scale
+				;changes:::	Not
+;
+L014D:	JP	SNSMAT		;Functio:	Read matrix of KBD
+				;Inpu:		[D]=roq number
+				;Outpu:		[E]=data
+				;changes:::	AF
+;
+L0150:	JP	SET_MOUS	;Functio:	Mouse position
+				;Inpu:		[HL]=X, [DE]=Y
+				;changes:::	All
+;
+;	RS-232 DRIVER
+;
+L0153:	JP	COM_INI		;Functio:	initRS-232
+				;Inpu:		[A]=bit2,3 number of bits:
+				;		    00-5,01-6,10-7,11-8 ише			;	bit 4,5
+				;		bit 4,5 parity
+				;		    00-not,01-нечетно,11-четно
+				;		bit 6,7 stop-bit lenght
+				;		    01-1 bit,10-1.5bit,11-2bit
+				;		[B]=speed:	0 - 300
+				;				1 - 600
+				;				2 - 1200
+				;				3 - 2400
+				;changes:::	All
+;
+L0156:	JP	COM_OUT_ST	;Functio:	If ready to output RS-232 
+;
+L0159:	JP	COM_OUT		;Functio:	Output byte RS-232
+				;Inpu:		[A]=байт
+				;Outpu:		CF=1, if full
+				;changes:::	AF
+;
+L015C:	JP	COM_IN_ST	;Functio:	Is ready to input RS-232 
+;
+L015F:	JP	COM_IN		;Functio:	read RS-232
+				;Outpu:		[A]=byte, CF=1, if pressed Ctrl+C
+				;changes:::	AF
+;
+L0162:	JP	FMESSXY		;quick input method
+L0165:	JP	INVERT		;characters inverse (negative) [HL]=XY [B]=N
+;
+;
+;=============== SLOTS DRIVER =======================;
+SLOTS:		.PHASE	WORKSPC
+LODSLT2:	JR	Z,LODSLT3
+		LD	(DE),A
+LODSLT3:	DEC	B
+		LD	A,B
+		CP	7BH
+		JP	NZ,LODSLT1
+		POP	DE
+		JP	SAVSLT2
+;
+RDSLT:		CALL	ENAPAG
+		LD	A,(HL)
+		OUT	(C),E
+		RET
+;	
+WRTSLT:		PUSH	DE
+		CALL	ENAPAG
+		LD	A,E
+		POP	DE
+		LD	(HL),E
+		OUT	(C),A
+		RET
+;
+CALLF:		EX	(SP),HL
+		PUSH	AF
+		PUSH	DE
+		LD	A,(HL)
+		PUSH	AF
+		POP	IY
+		INC	HL
+		LD	E,(HL)
+		INC	HL
+		LD	D,(HL)
+		INC	HL
+		PUSH	DE
+		POP	IX
+		POP	DE
+		POP	AF
+		EX	(SP),HL
+;
+CALSLT:		DI
+		EXX
+		EX	AF,AF'
+		PUSH	IY
+		POP	AF
+		PUSH	IX
+		POP	HL
+		CALL	ENASLT
+		PUSH	BC
+		PUSH	DE
+		PUSH	HL
+		EXX
+		EX	AF,AF'
+		CALL	USERJP
+		EXX
+		EX	AF,AF'
+		POP	HL
+		POP	DE
+		POP	BC
+		OUT	(C),E
+		LD	A,E
+		AND	0FH
+		CP	9
+		JR	Z,ENORM
+		LD	(HL),A
+ENORM:		EXX
+		EX	AF,AF'
+		RET
+USERJP:		JP	(IX)
+;
+ENASLT:		CALL	ENAPAG
+		LD	HL,0F341H
+		LD	A,B
+		AND	3
+		ADD	A,L
+		LD	L,A
+		LD	A,D
+		AND	1FH
+		CP	9
+		RET	Z
+		LD	(HL),A
+		RET
+;
+ENAPAG:		DI
+		LD	D,A
+		LD	A,H
+		RLCA
+		RLCA
+		AND	3
+		OR	7CH
+		LD	B,A
+		IN	E,(C)
+		LD	A,D
+		OR	0C0H
+		OUT	(C),A
+		RET
+;
+SAVESLT:	PUSH	HL
+		PUSH	BC
+		LD	HL,(SLTSP)
+		LD	B,7CH
+SAVSLT1:	IN	A,(C)
+		LD	(HL),A
+		INC	B
+		INC	HL
+		LD	A,B
+		CP	80H
+		JR	NZ,SAVSLT1
+SAVSLT2:	LD	(SLTSP),HL
+		POP	BC
+		POP	HL
+		RET
+;
+LOADSLT:	PUSH	HL
+		PUSH	BC
+		PUSH	DE
+		LD	DE,0F345H
+		LD	HL,(SLTSP)
+		LD	B,7FH
+LODSLT1:	DEC	HL
+		DEC	DE
+		LD	A,(HL)
+		OUT	(C),A
+		AND	1FH
+		CP	9
+		JP	LODSLT2
+		.DEPHASE
+;
+;============= HARDWARE ================;
+INITI1:		LD	B,10H
+		LD	D,0
+INITI2:		LD	E,(HL)
+		CALL	WR_CRT
+		INC	HL
+		INC	D
+		DJNZ	INITI2
+		RET
+;
+MC6845L:	DEFB	3FH,28H,2EH,8EH,26H,00H,19H,1EH
+		DEFB	00H,07H,00H,00H,00H,00H,00H,00H
+MC6845H:	DEFB	6BH,50H,51H,8EH,26H,00H,19H,1EH
+		DEFB	00H,07H,00H,00H,00H,00H,00H,00H
+;
+CPHLDE:		LD	A,H
+		CP	D
+		RET	NZ
+		LD	A,L
+		CP	E
+		RET
+;
+CPHLBC:		LD	A,H
+		CP	B
+		RET	NZ
+		LD	A,L
+		CP	C
+		RET
+;
+NMI:		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		EXX
+		EX	AF,AF'
+		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		PUSH	IY
+		PUSH	IX
+		CALL	XFD90
+		POP	IX
+		POP	IY
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		EX	AF,AF'
+		EXX
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		RETN
+;
+WR_PSG:		DI
+		PUSH	BC
+		LD	B,0F4H
+		OUT	(C),D
+		LD	B,0F6H
+		IN	A,(C)
+		OR	0C0H
+		OUT	(C),A
+		AND	3FH
+		OUT	(C),A
+		LD	B,0F4H
+		OUT	(C),E
+		LD	B,0F6H
+		LD	C,A
+		OR	80H
+		OUT	(C),A
+		OUT	(C),C
+		POP	BC
+		EI
+		RET
+;
+RD_PSG:		DI
+		PUSH	BC
+		LD	B,0F4H
+		OUT	(C),D
+		LD	B,0F6H
+		IN	A,(C)
+		AND	30H
+		LD	C,A
+		OR	0C0H
+		OUT	(C),A
+		OUT	(C),C
+		INC	B
+		LD	A,92H
+		OUT	(C),A
+		LD	B,0F4H
+		IN	E,(C)
+		LD	B,0F7H
+		LD	A,82H
+		OUT	(C),A
+		DEC	B
+		OUT	(C),C
+		POP	BC
+		EI
+		RET
+;
+WR_TIMER:	DI
+		PUSH	BC
+		LD	B,0F6H
+		IN	C,(C)
+		PUSH	BC
+		LD	B,0F4H
+		OUT	(C),E
+		LD	A,D
+		AND	3
+		LD	BC,0FABCH
+		OR	C
+		LD	C,A
+		LD	A,(EXTPORT)
+		SET	4,A
+		OUT	(C),A
+		RES	4,A
+		OUT	(C),A
+		POP	BC
+		OUT	(C),C
+		POP	BC
+		EI
+		RET
+;
+WR_CLOCK:	LD	A,D
+		CP	10
+		JR	NC,WRITE_CLOCK
+		PUSH	DE
+WR_CLOCK_1:	LD	D,10
+		CALL	READ_CLOCK
+		BIT	7,E
+		JR	NZ,WR_CLOCK_1
+		POP	DE
+WRITE_CLOCK:	DI
+		PUSH	BC
+		LD	A,(EXTPORT)
+		SET	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	B,0F4H
+		OUT	(C),D
+		LD	BC,0F602H
+		OUT	(C),C
+		LD	C,0
+		OUT	(C),C
+		LD	B,0F4H
+		OUT	(C),E
+		LD	BC,0F604H
+		OUT	(C),C
+		LD	C,0
+		OUT	(C),C
+		RES	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		POP	BC
+		EI
+		RET
+;
+RD_CLOCK:	LD	A,D
+		CP	10
+		JR	NC,READ_CLOCK
+		PUSH	DE
+RD_CLOCK_1:	LD	D,10
+		CALL	READ_CLOCK
+		BIT	7,E
+		JR	NZ,RD_CLOCK_1
+		POP	DE
+READ_CLOCK:	DI
+		PUSH	BC
+		LD	A,(EXTPORT)
+		SET	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	B,0F4H
+		OUT	(C),D
+		LD	BC,0F602H
+		OUT	(C),C
+		LD	C,0
+		OUT	(C),C
+		LD	BC,0F792H
+		OUT	(C),C
+		LD	BC,0F605H
+		OUT	(C),C
+		LD	B,0F4H
+		IN	E,(C)
+		LD	BC,0F600H
+		OUT	(C),C
+		LD	BC,0F782H
+		OUT	(C),C
+		RES	5,A
+		LD	BC,0FABFH
+		OUT	(C),A
+		LD	A,E
+		POP	BC
+		EI
+		RET
+;
+WR_CRT:		PUSH	BC
+		LD	B,0BCH
+		OUT	(C),D
+		INC	B
+		OUT	(C),E
+		LD	A,D
+		CP	14
+		JR	NC,WR_CRT1
+		PUSH	HL
+		LD	C,D
+		LD	B,00
+		LD	HL,VDPREGS
+		ADD	HL,BC
+		LD	(HL),E
+		POP	HL
+WR_CRT1:	POP	BC
+		RET
+;
+RD_CRT:		PUSH	BC
+		LD	A,D
+		CP	14
+		JR	NC,RD_CRT1
+		PUSH	HL
+		LD	HL,VDPREGS
+		LD	C,D
+		LD	B,00
+		ADD	HL,BC
+		LD	E,(HL)
+		POP	HL
+		POP	BC
+		RET
+;
+RD_CRT1:	LD	B,0BCH
+		OUT	(C),D
+		INC	B
+		IN	E,(C)
+		POP	BC
+		RET
+;
+WAIT:		PUSH	BC
+		LD	B,0F5H
+WAIT_1:		IN	A,(C)
+		RRA
+		JR	NC,WAIT_1
+		POP	BC
+		RET
+;
+CHGRUS:		PUSH	BC
+		LD	B,7FH
+		AND	A
+		LD	A,(SPCPORT)
+		JR	Z,CHGRUS1
+		RES	4,A
+CHGRUS2:	LD	(SPCPORT),A
+		AND	3FH
+		OR	80H
+		OUT	(C),A
+		POP	BC
+		RET
+;
+CHGRUS1:	SET	4,A
+		JR	CHGRUS2
+;
+SNSMAT:		DI
+		PUSH	BC
+		LD	BC,0F40EH
+		OUT	(C),C
+		LD	B,0F6H
+		IN	A,(C)
+		AND	30H
+		LD	C,A
+		OR	0C0H
+		OUT	(C),A
+		OUT	(C),C
+		INC	B
+		LD	A,92H
+		OUT	(C),A
+		LD	B,0F6H
+		LD	A,C
+		OR	D
+		OR	40H
+		OUT	(C),A
+		LD	B,0F4H
+		IN	E,(C)
+		LD	B,0F7H
+		LD	A,82H
+		OUT	(C),A
+		DEC	B
+		OUT	(C),C
+		POP	BC
+		EI
+		RET
+;
+SET_TIMER:	DI
+		LD	(TIMER),HL
+		LD	HL,0
+		LD	(INT_CNT),HL
+		EI
+		RET
+;
+GET_TIMER:	LD	HL,(TIMER)
+		RET
+;
+;=====================	INITIALIZE  ==========================;
+MAPTAB:		DB	1,1,1,1,4,4,4,3,2,2
+BIOS_MESS:	DB	'FOTON-127 SPECIAL ROM BIOS version 1.00',0DH,0AH
+		DB	'(C) 19/07/1995 Foton&D+',0DH,0AH,0
+;
+MESSAGE:	LD	A,(DE)
+		AND	A
+		RET	Z
+		CALL	SYMBOL
+		INC	DE
+		JR	MESSAGE
+;
+INIT:		LD	SP,WORKSPC
+		LD	BC,7FC7H
+		OUT	(C),C
+		LD	HL,0FC00H
+		LD	DE,0FC01H
+		LD	BC,03FFH
+		LD	(HL),0
+		LDIR
+		LD	HL,SLOTS
+		LD	DE,WORKSPC
+		LD	BC,INITI1-SLOTS
+		LDIR
+		LD	HL,SLTWRK
+		LD	(SLTSP),HL
+		LD	HL,0FD90H
+		LD	DE,0FD91H
+		LD	BC,0004FH
+		LD	(HL),0C9H
+		LDIR
+		LD	A,9
+		LD	H,40H
+		CALL	L0024
+		LD	A,6
+		LD	H,80H
+		CALL	L0024
+		LD	A,7
+		LD	H,0C0H
+		CALL	L0024
+		LD	HL,MAPTAB
+		LD	DE,0FFE0H
+		LD	BC,10
+		LDIR
+		LD	HL,0F341H
+		LD	(HL),4
+		INC	HL
+		LD	(HL),5
+		LD	A,8
+		LD	(BIOSSLT),A
+		LD	A,4
+		LD	(EXTPORT),A
+		LD	A,30H
+		LD	(SPCPORT),A
+		LD	DE,03B6H
+		CALL	WR_TIMER
+		CALL	KEY_INIT
+
+		LD	A,16	;DELAY=8
+		CALL	SET_DELAY
+
+		LD	A,2	;REPEAT=2
+		CALL	SET_REPT
+
+		LD	A,1	;PC MOUSE
+		CALL	MOUS_INIT
+		CALL	CUR_INIT
+		CALL	SCR_INIT
+		LD	DE,BIOS_MESS
+		CALL	MESSAGE
+		JP	4000H
+;
+;		INTERRUPTS
+;
+INT38:		DI
+		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		EXX
+		EX	AF,AF'
+		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		PUSH	IY
+		PUSH	IX
+		LD	B,0F5H
+		IN	A,(C)
+		RRA
+		JR	NC,INT38_1
+		LD	A,0FFH
+		LD	(INTFLAG),A
+INT38_1:	CALL	XFD9A		; All Interrupt Hook
+;		LD	HL,(INT_CNT)
+;		LD	BC,3333
+;		ADD	HL,BC
+;		LD	(INT_CNT),HL
+;		LD	DE,(TIMER)
+;		SBC	HL,DE
+;		JR	C,INT38_2
+;		LD	(INT_CNT),HL
+;		CALL	XFD95		; Timer Interrupt hook
+INT38_2:	LD	B,0EFH
+		IN	A,(C)
+		LD	(RS_STAT),A
+		AND	38H
+		CALL	NZ,XFDA4	; Error Interrupt hook
+;		LD	A,(RS_STAT)
+;		RLA
+;		CALL	C,XFDA9		; CTS Interrupt hook
+		LD	A,(RS_STAT)
+		AND	2
+		CALL	NZ,XFDAE	; RxRDY Interrupt hook
+;		LD	A,(RS_STAT)
+;		RRA	
+;		CALL	C,XFDB3		; TxRDY Interrupt hook
+		LD	A,(INTFLAG)
+		AND	A
+		JR	Z,INT38_4
+		XOR	A
+		LD	(INTFLAG),A
+		CALL	XFD9F		; Hook 50 Hz Interrupt
+		EI
+		LD	HL,SCNCNT	; Counter of scan KBD
+		DEC	(HL)
+		JR	NZ,INT38_3
+		LD	A,(SCAN)
+		LD	(HL),A
+		CALL	KEY_SCAN	; Scan all matrix
+		JR	NZ,INT38_3	; If pressed, Outpu
+		LD	HL,REPCNT       ; Autorepeat counter
+		DEC	(HL)
+		JR	NZ,INT38_3
+		LD	A,(REPEAT)
+		LD	(HL),A
+		LD	HL,OLDKEY
+		LD	DE,OLDKEY+1
+		LD	BC,000AH
+		LD	(HL),0FFH
+		LDIR			; clear buffer
+		CALL	KEY_REPEAT      ; Autorepeat
+INT38_3:
+;		CALL	LPTSTT
+;		CALL	Z,XFDB8		; BUSY Interrupt hook
+;		LD	D,2
+;		CALL	SNSMAT
+;		LD	A,E
+;		CP	5FH
+;		JR	NZ,INT38_4
+;		LD	D,8
+;		CALL	SNSMAT
+;		LD	A,E
+;		CP	0FBH
+;		CALL	Z,XFDC7 	; BREAK Interrupt hook
+
+INT38_4:	POP	IX
+		POP	IY
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		EX	AF,AF'
+		EXX
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		EI
+		RET
+;
+INCLUDE		BIOS.SCR
+INCLUDE		BIOS.DRV
+;
+		END
+
