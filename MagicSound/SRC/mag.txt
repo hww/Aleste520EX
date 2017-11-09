@@ -1,0 +1,1619 @@
+ 	.Z80
+;===========================================================================
+;		  M A G I C    S O U N D
+;		     ALESTE MC 520 EX
+;	            Patisonic  corp.  technology
+;
+;============================ Порты адаптера ===============================
+;
+DMA_A		EQU	0F8D0H
+DMA_B		EQU	0F8D2H
+DMA_C		EQU	0F8D4H
+DMA_D		EQU	0F8D6H
+;
+LEN_A		EQU	DMA_A+1
+LEN_B		EQU	DMA_B+1
+LEN_C		EQU	DMA_C+1
+LEN_D		EQU	DMA_D+1
+;
+DMACOM		EQU	0F8D8H
+DMAMOD		EQU	0F8DBH
+DMARES		EQU	0F8DDH
+DMAMASK		EQU	0F8DAH
+;
+TIM_A		EQU	0F9D8H
+TIM_B		EQU	0F9D9H
+TIM_C		EQU	0F9DAH
+TIM_D		EQU	0F9D4H
+TIM_E		EQU	0F9D5H
+;
+TIMUP0		EQU	0F9DBH
+TIMUP1		EQU	0F9D7H
+;
+VOL_A		EQU	0FAD0H
+VOL_B		EQU	0FAD1H
+VOL_C		EQU	0FAD2H
+VOL_D		EQU	0FAD3H
+;
+DMAP_A		EQU	0FBD0H
+DMAP_B		EQU	0FBD4H
+DMAP_C		EQU	0FBD8H
+DMAP_D		EQU	0FBDCH
+;
+;==========================    Прерывания ================================
+;
+INT_H		EQU     38H	;0FD9FH
+NMI_H		EQU	66H
+X_Y		EQU	1401H
+;
+;========================== Звуковые переменные ==========================
+;
+DATA		EQU     2000H
+INST		EQU	2030H
+ORDER 		EQU	2410H
+I_DIV		EQU	2490H
+T_VIBRATO	EQU     2D00H
+TEMP_CONT	EQU     2F80H
+TEMP_PE		EQU	2F81H
+F_N_PAT		EQU	2F82H
+NEXT_ORD	EQU	2F84H
+SEK_ORD		EQU	2F86H
+NUM_PART	EQU     2F88H
+VOL_1234	EQU     2F8CH
+SOUND_ON	EQU	2F8EH
+F_PRINT		EQU	2F90H
+F_TEMP		EQU	2F92H
+STAR_S		EQU	2F94H
+STAR_D		EQU     2F96H
+STAR_M		EQU	2F98H
+D_POINT		EQU	2F9AH
+;----------------------- Текущие параметы --------------------------------
+SEG_A		EQU	3078H
+SEG_B		EQU	307AH
+SEG_C		EQU	307CH
+SEG_D		EQU	307EH
+;
+PAT_POINT	EQU	0-78H
+ADR_PAT		EQU	0-70H
+;
+SNG_DIV		EQU	0-68H
+SNG_VOL		EQU	0-60H
+;
+F_START		EQU     0-58H
+F_VOL		EQU     0-50H
+F_DIV		EQU	0-48H
+F_LOOP		EQU	0-40H
+F_RESTART	EQU	0-38H
+F_CH_ON		EQU	0-30H
+;
+SEK_DIV		EQU	0-28H
+SEK_VOL		EQU	0-20H
+SEK_SAMP	EQU	0-18H
+;
+TIM_TREM	EQU	0-10H
+ON_OFF		EQU	0-08H
+;
+NMI_START	EQU	0-0H
+NMI_LENGHT	EQU	8H
+;
+START_0		EQU	10H
+START_1		EQU	18H
+LENGHT_0	EQU	20H
+LENGHT_1	EQU	28H
+S_MAP		EQU	30H
+;----------------------- Параметры из ноты ------------------------------
+N_COMAND	EQU	38H
+N_VOLUME	EQU	40H
+N_NOTE		EQU	48H
+N_SAMPLE	EQU	50H
+N_PARAM		EQU	58H
+;
+VIB_POINT	EQU	60H
+F_ARP		EQU	68H
+TIM_ARP		EQU	70H
+PIK_VOL		EQU	78H
+;
+;====================== Макрос старта каналов ==============================
+;
+MA_START	MACRO   SEG,STOP,DMA,TIM,DST,BMOD,PVOL,DMAP
+		LOCAL	MA_0,MA_1,MA_2,MA_3,MA_4,MA_5,MA_6,MA_7,MAQU
+		LD	A,(SEG+F_CH_ON)
+		OR	A
+		JR	Z,MA_0
+;
+		LD	A,STOP
+		LD	BC,DMAMASK
+;		OUT	(C),A
+		LD	BC,PVOL
+		LD	A,40H
+		OUT	(C),A
+		JP	MAQU
+;
+MA_0:		LD	A,(F_START+SEG)
+		OR	A
+		JR	Z,MA_2
+;
+		LD	A,STOP
+		LD	BC,DMAMASK
+		OUT	(C),A
+		LD	A,(F_LOOP+SEG)
+		LD	(F_RESTART+SEG),A
+		OR	A
+		JR	Z,MA_1
+;
+		LD	HL,(START_1+SEG)
+		LD	(NMI_START+SEG),HL
+		LD	HL,(LENGHT_1+SEG)
+		LD	(NMI_LENGHT+SEG),HL
+MA_1:		LD	BC,DMA
+		LD	HL,(START_0+SEG)
+		OUT	(C),L
+		OUT	(C),H
+		INC	C
+		LD	HL,(LENGHT_0+SEG)
+		OUT	(C),L
+		OUT	(C),H
+MA_2:		LD	A,(F_DIV+SEG)
+		OR	A
+		JR	Z,MA_3
+;
+		LD	BC,TIM
+		LD	HL,(SNG_DIV+SEG)
+		OUT	(C),L
+		OUT	(C),H
+;
+MA_3:           LD	A,(F_VOL+SEG)
+		OR	A
+		JR	Z,MA_6
+;
+		LD	A,(SNG_VOL+SEG)
+		SUB	1
+		JR	Z,MA_5
+		JR	NC,MA_4
+;
+MA_5:           LD	A,40H
+MA_4:           LD	BC,PVOL
+		OUT	(C),A
+		AND	3FH
+		LD	L,A
+		LD	A,(PIK_VOL+SEG)
+		CP	L
+		JR	NC,MA_6
+		LD	A,L
+		LD	(PIK_VOL+SEG),A
+;
+MA_6:		LD	A,(F_START+SEG)
+		OR	A
+		JR	Z,MAQU
+;
+		LD	BC,DMAP
+		LD	A,(S_MAP+SEG)
+		CPL
+		OUT	(C),A
+		INC	C
+		DEC	A
+		OUT	(C),A
+		INC	C
+		DEC	A
+		OUT	(C),A
+		INC	C
+		DEC	A
+		OUT	(C),A
+;
+		LD	BC,DMAMOD
+		LD	A,BMOD
+		OUT	(C),A
+		LD	BC,DMAMASK
+		LD	A,DST
+		OUT	(C),A
+MAQU:	        SUB	A
+		LD	(F_START+SEG),A
+		LD	(F_DIV+SEG),A
+		LD	(F_VOL+SEG),A
+		LD	(F_LOOP+SEG),A
+		LD	(F_CH_ON+SEG),A
+		ENDM
+;
+;========================== Макрос  NMI_A ==================================
+;
+MA_NMI		MACRO	SEG1,DMA1,DMOD1,DST1
+		LOCAL	MA_QUIT
+		RRC	E
+		JR	NC,MA_QUIT
+		LD	A,(F_RESTART+SEG1)
+		OR	A
+		JR	Z,MA_QUIT
+;
+		LD	HL,(NMI_START+SEG1)
+		LD	BC,DMA1
+		OUT	(C),L
+		OUT	(C),H	;начало
+		INC	C
+		LD	HL,(NMI_LENGHT+SEG1)
+            	OUT	(C),L
+		OUT	(C),H	;длина
+		SUB	A
+		LD	(F_RESTART+SEG1),A ;выключим допрограммирование
+		LD	BC,DMAMOD	;програмируем в автозапуск
+		LD	A,DMOD1
+		OUT	(C),A
+		LD	BC,DMAMASK
+		LD	A,DST1
+		OUT	(C),A	;запускаем канал
+MA_QUIT:	NOP
+		ENDM
+;
+;=========================== Макрос BDOS =================================
+;
+BDOS		MACRO	FUNCTION
+		LD	C,FUNCTION
+		CALL	5
+		ENDM
+;
+;========================== СТАРТ программы ==============================
+;
+START:		LD	SP,(6)
+		CALL	INI_PRT
+		CALL	CLEAR
+		CALL	LOAD
+		CALL	RESTORE
+		CALL	INI_DIV
+		LD	A,0
+		RST	30H
+		DB	8,81H,0
+		LD	HL,0B800H
+		CALL	SET_STAR
+		LD	HL,0B000H
+		CALL	SET_STAR1
+		LD	HL,DEMO
+		LD	(D_POINT),HL
+		CALL	SET_INT
+		LD	HL,X_Y
+		LD	(0FE09H),HL
+;
+;=========================== Петля проигрывателя ==========================
+;
+LOOP:		EI
+		LD	A,(F_PRINT)
+		OR	A
+		JR	Z,LOP_1
+                LD	A,(F_TEMP)
+		OR	A
+		JP	Z,LOP_2
+		SUB	A
+		LD	(F_TEMP),A
+		LD	IX,SEG_A
+		CALL	OUT_PUT
+		LD	IX,SEG_B
+		CALL	OUT_PUT
+		LD	IX,SEG_C
+		CALL	OUT_PUT
+		LD	IX,SEG_D
+		CALL	OUT_PUT
+		CALL	ENTER
+		JP	LOP_2
+;
+LOP_1:		LD	A,(F_TEMP)
+		OR	A
+		JP	LOP_11
+		SUB	A
+		LD	(F_TEMP),A
+		LD	HL,(D_POINT)
+		LD	A,(HL)
+		INC	HL
+		LD	(D_POINT),HL
+		CP	1
+		JP	Z,DT_0
+                JP	C,DT_1
+     		RST	30H
+		DB	8,18H,0
+		EI
+                JP	LOP_11
+DT_0:		LD	HL,DEMO
+		LD	(D_POINT),HL		
+DT_1:		LD	HL,X_Y
+		LD	(0FE09H),HL		
+LOP_11:		LD	A,(SEG_A+PIK_VOL)
+		LD	HL,8004H+19*80
+		CALL	LINE
+		LD	A,(SEG_B+PIK_VOL)
+		LD	HL,8004H+20*80
+		CALL	LINE
+		LD	A,(SEG_C+PIK_VOL)
+		LD	HL,8004H+21*80
+		CALL	LINE
+		LD	A,(SEG_D+PIK_VOL)
+		LD	HL,8004H+22*80
+		CALL	LINE
+		CALL	STAR_ON
+		CALL	STAR_ON1
+		JP	LOP_2
+;
+;-------------->
+LINE:		LD	BC,7EC0H
+		OUT	(C),C
+		RRCA
+		RRCA
+		AND	0FH
+		LD	B,A
+		INC	B
+		LD	A,10H
+		LD	DE,0800H
+LDI_0:		LD	(HL),0FCH
+		ADD	HL,DE
+		LD	(HL),0FCH
+		ADD	HL,DE
+		LD	(HL),0FCH
+		OR	A
+		SBC	HL,DE
+		SBC	HL,DE
+		INC	HL
+		DEC	A
+		DJNZ    LDI_0
+		LD	B,A
+		INC	B
+LDI_1:		LD	(HL),0
+		ADD	HL,DE
+		LD	(HL),0
+		ADD	HL,DE
+		LD	(HL),0
+		OR	A
+		SBC	HL,DE
+		SBC	HL,DE
+		INC	HL
+		DJNZ    LDI_1
+;
+		LD	BC,7EC6H
+		OUT	(C),C
+		RET
+;
+LOP_2:		RST	30H
+		DB	08H,08H,00H
+		OR	A
+		JP	Z,LOOP
+		CP	20H
+		JR	NZ,LOP_0
+		LD	A,(F_PRINT)
+		CPL
+		LD	(F_PRINT),A
+		SUB	A
+		RST	30H
+		DB	8,81H,0
+		LD	A,(F_PRINT)
+		OR	A
+		JP	NZ,LOOP
+		LD	HL,0B800H
+		CALL	SET_STAR
+		LD	HL,0B000H
+		CALL	SET_STAR1
+		LD	HL,X_Y
+		LD	(0FE09H),HL
+		JP	LOOP
+;
+LOP_0:		CP	0DH
+		JR	NZ,LOP_4
+		LD	A,1
+		LD	(F_N_PAT),A
+		JP	LOOP
+LOP_4:		SUB	A
+		LD	(SOUND_ON),A
+		CALL	INI_PRT
+		CALL	GET_INT
+		LD	H,40H
+		LD	A,5
+		CALL	24H
+		LD	A,0
+		RST	30H
+		DB	8,81H,0
+             	RST	0
+;------------------------- * * * * * ---------------------------
+STAR_ON:        LD	HL,(STAR_S)
+		PUSH	HL
+		LD	A,(STAR_M)
+		PUSH	AF
+		RRCA
+		RRCA
+		RRCA
+		RRCA
+		LD	(STAR_M),A
+		AND	1
+		JR	Z,STON_0
+		INC	HL
+		LD	A,H
+		AND	7
+		OR	0B8H
+		LD	(STAR_S),HL
+STON_0:		CALL	SS_3
+		POP	AF
+		LD	(STAR_M),A
+		POP	HL
+		CALL	SS_3
+		LD	A,(STAR_M)
+		RRCA		
+		RRCA
+		RRCA
+		RRCA
+		LD	(STAR_M),A
+		RET
+;
+SET_STAR:       LD	(STAR_S),HL
+		LD	A,1
+		LD	(STAR_M),A
+;
+SS_3:		LD	DE,100H
+     	        LD	BC,7EC0H
+               	OUT	(C),C
+		LD	B,30H
+SS_0:		LD	A,(DE)
+		AND	1FH
+		ADD	A,20H
+		LD	C,A
+		LD	A,B
+		LD	B,0
+		ADD	HL,BC
+		LD	B,A
+		LD	A,H
+		AND	7
+		OR	0B8H
+		LD	H,A
+		LD	A,(STAR_M)
+		XOR	(HL)
+		LD	(HL),A
+		PUSH	HL
+		LD	A,L
+		CPL
+		LD	L,A
+		LD	A,H
+		CPL
+		AND	7
+		OR	0B8H
+		LD	H,A
+		LD	A,(STAR_M)
+		XOR	(HL)
+		LD	(HL),A
+		POP	HL
+		INC	DE
+		DJNZ    SS_0
+;
+SS_1:		LD	BC,7EC6H
+		OUT	(C),C
+		RET
+;
+;
+STAR_ON1:       LD	HL,(STAR_D)
+		PUSH	HL
+		INC	HL
+		LD	A,H
+		AND	7
+		OR	0B0H
+		LD	(STAR_D),HL
+		CALL	SS_31
+		POP	HL
+		CALL	SS_31
+		RET
+;
+SET_STAR1:	LD	(STAR_D),HL
+;
+SS_31:		LD	DE,100H
+		LD	BC,7EC0H
+               	OUT	(C),C
+		LD	B,30H
+SS_01:		LD	A,(DE)
+		AND	1FH
+		ADD	A,20H
+		LD	C,A
+		LD	A,B
+		LD	B,0
+		ADD	HL,BC
+		LD	B,A
+		LD	A,H
+		AND	7
+		OR	0B0H
+		LD	H,A
+		LD	A,(HL)
+		XOR	70H
+		LD	(HL),A
+		PUSH	HL
+		LD	A,L
+		CPL
+		LD	L,A
+		LD	A,H
+		CPL
+		AND	7
+		OR	0B8H
+		LD	H,A
+		LD	A,(HL)
+		XOR	70H
+		LD	(HL),A
+		POP	HL
+		INC	DE
+		DJNZ    SS_01
+;
+SS_11:		LD	BC,7EC6H
+		OUT	(C),C
+		RET
+;
+;
+;======================= Установка параметров в начало ====================
+;
+CLEAR:		DI
+		LD	HL,DATA
+		LD	DE,DATA+1
+		LD	BC,4000H-DATA
+		LD	(HL),0
+		LDIR
+		RET
+;
+RESTORE:	LD	A,(DATA+32)	;темп
+		CP	16
+		JR	NC,RE_0
+		LD	A,16
+RE_0:		SRL	A
+		SRL	A
+		SRL	A
+		SRL	A
+		LD	(TEMP_CONT),A
+		LD	(TEMP_PE),A
+;
+		LD	HL,T_VIB_1
+		LD	DE,T_VIBRATO
+		LD	BC,200H
+		LDIR
+;
+		LD	A,1
+		LD	(F_N_PAT),A
+		LD	HL,ORDER
+		LD	(NEXT_ORD),HL
+;
+		LD	A,(DATA+34)
+		LD	(VOL_1234),A
+;
+		LD	A,1
+		LD	(SOUND_ON),A
+		RET
+;
+;===================== ОБРАБОТКА ПРЕРЫВАНмЯ INT =========================
+;
+PRG_INT:	PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+		PUSH	IX
+		PUSH	IY
+;
+		LD	BC,0F5FFH
+		IN	A,(C)
+		RRCA
+		JP	C,T_34
+		CALL	NMI
+                JP	EXIT
+
+T_34:		RST	30H
+		DB	8H,38H,0H
+
+		CALL	NMI
+;
+;
+		MA_START	SEG_A,4,DMA_A,TIM_A,0,48H,VOL_A,DMAP_A
+		MA_START	SEG_B,5,DMA_B,TIM_B,1,49H,VOL_B,DMAP_B
+		MA_START	SEG_C,6,DMA_C,TIM_C,2,4AH,VOL_C,DMAP_C
+		MA_START	SEG_D,7,DMA_D,TIM_D,3,4BH,VOL_D,DMAP_D
+;
+		LD	A,(TEMP_CONT)
+		OR	A
+		JR	Z,PR_0
+;
+		DEC	A
+		LD	(TEMP_CONT),A
+		LD	IX,SEG_A
+		CALL	COMMAND
+		LD	IX,SEG_B
+		CALL	COMMAND
+		LD	IX,SEG_C
+		CALL	COMMAND
+		LD	IX,SEG_D
+		CALL	COMMAND
+		JP	EXIT
+PR_0:		LD	A,(SOUND_ON)
+		OR	A
+		JP	Z,EXIT	;звук выключен
+		LD	A,(TEMP_PE)
+		OR	A
+		JR	Z,PR_2
+		DEC	A
+PR_2:		LD	(TEMP_CONT),A
+		LD	A,(F_N_PAT)
+		OR	A
+		JR	Z,PR_3	;переьод на следующий ордер не нужен
+		SUB	A
+		LD	(F_N_PAT),A
+		CALL	NEX_ORD
+PR_3:		LD	IX,SEG_A
+		CALL	NEXT_NOT
+		LD	IX,SEG_B
+		CALL	NEXT_NOT
+		LD	IX,SEG_C
+		CALL	NEXT_NOT
+		LD	IX,SEG_D
+		CALL	NEXT_NOT
+		LD	A,0FFH
+		LD	(F_TEMP),A
+;
+EXIT:		POP	IY
+		POP	IX
+		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		EI
+BUF_INT:        DB	0,0,0,0
+		RET
+;
+;======================= выборка параметров нот ========================
+;
+NEXT_NOT:	INC	(IX+PAT_POINT)
+		LD	A,(IX+PAT_POINT)
+		CP	40H
+		JR	C,NEX_0 ;патерн не кончился
+		LD	A,1
+		LD	(F_N_PAT),A ;флаг перехода по ордеру
+NEX_0:		LD	L,(IX+ADR_PAT)
+		LD	H,(IX+ADR_PAT+1)
+		PUSH	HL
+		POP	IY	;указатель на патерн
+		LD	A,(IY+0)
+		LD	(IX+N_NOTE),A ;нота с октавой
+		LD	A,(IY+1)
+		SRL	A
+		SRL	A
+		SRL	A
+		LD	(IX+N_SAMPLE),A ;номер инструмента
+		LD	A,(IY+1)
+		AND	7
+		LD	L,A
+		LD	A,(IY+2)
+		RRCA
+		AND	78H
+		OR	L
+		LD	(IX+N_VOLUME),A  ;громкость йз ноты
+		LD	A,(IY+2)
+		AND	0FH
+		LD	(IX+N_COMAND),A   ;команда
+         	LD	A,(IY+3)
+		LD	(IX+N_PARAM),A   ;параметр
+		PUSH	IY
+		POP	HL
+		LD	DE,10H
+		ADD	HL,DE	;цледующая нота
+		LD	(IX+ADR_PAT),L
+		LD	(IX+ADR_PAT+1),H
+		CALL	GET_NOT
+		LD	A,(IX+N_COMAND)
+		CP	9
+		JP	NZ,CG_0
+		CALL	COMMAND
+		RET
+CG_0:		CP	10
+		RET	NZ
+		LD	(IX+F_ARP),1
+		LD	A,(IX+N_PARAM)
+		AND	0F0H
+		SRL	A
+		SRL	A
+		SRL	A
+		SRL	A
+		LD	(IX+TIM_ARP),A
+		RET
+;
+;================== подготовка параметров для DMA =========================
+;
+GET_NOT:	LD	A,(IX+N_VOLUME) ;громкость из ноты
+		CP	41H
+		JR	NC,GET_0
+;
+		LD	(IX+SNG_VOL),A
+		LD	(IX+SEK_VOL),A
+		LD	(IX+F_VOL),1
+;
+GET_0:		LD	A,(IX+N_COMAND)
+		CP	7
+		JP	Z,GET_2	;команда = 7
+;
+		LD	A,(IX+N_NOTE)
+		CP	0FFH
+		JP	Z,GET_7
+		LD	A,(IX+N_SAMPLE)
+		OR	0
+		JP	Z,GET_3 ;инструмент = 0
+;
+		LD	L,A
+		LD	H,0
+		ADD	HL,HL	;*2
+		ADD	HL,HL	;*4
+		ADD	HL,HL	;*8
+		ADD	HL,HL	;*16
+		ADD	HL,HL	;*32
+		LD	DE,INST-32	;Начало инструментов
+		ADD	HL,DE
+		PUSH	HL
+		POP	IY
+		LD	(IX+SEK_SAMP),L
+		LD	(IX+SEK_SAMP+1),H ;начало текущего инструмента
+		LD	A,(IX+N_VOLUME)
+		CP	41H
+		JR	NZ,GET_4
+		LD	A,(IY+16H)	;громкость из инструмента
+		LD	(IX+SNG_VOL),A
+		LD	(IX+SEK_VOL),A
+		LD	(IX+F_VOL),1
+GET_4:
+                LD	L,(IY+0EH)
+		LD	H,(IY+0FH)	;начало в памяти инструмента
+		LD	DE,49H
+		OR	A
+		SBC	HL,DE
+		LD	A,H
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,HL
+		ADD	HL,HL
+		RES	6,H
+		RES	7,H
+		SRL	A
+		SRL	A
+		ADD	A,0AH	;начало буфера данных
+		LD	(IX+S_MAP),A
+		LD	(IX+START_0),L
+		LD	(IX+START_0+1),H
+		LD	L,(IY+14H)
+		LD	H,(IY+15H)	;начало 2 длины
+		INC	HL
+		LD	A,L
+		OR	H
+		JR	Z,GET_5
+;
+		DEC	HL
+		LD	(IX+LENGHT_0),L
+		LD	(IX+LENGHT_0+1),H
+		LD	E,(IY+12H)
+		LD	D,(IY+13H)	;начало 2 старта
+		OR	A
+		SBC	HL,DE
+		LD	(IX+LENGHT_1),L
+		LD	(IX+LENGHT_1+1),H
+		LD	L,(IX+START_0)
+		LD	H,(IX+START_0+1)
+		ADD	HL,DE
+		LD	(IX+START_1),L
+		LD	(IX+START_1+1),H
+		LD	(IX+F_LOOP),1
+		JR	GET_31
+;
+GET_5:		LD	L,(IY+10H)
+		LD	H,(IY+11H)	;длина в памяти инструмента
+		LD	(IX+LENGHT_0),L
+		LD	(IX+LENGHT_0+1),H
+GET_31:		LD	(IX+F_START),1
+;
+GET_3:		LD	A,(IX+N_NOTE)
+		CP	0FEH
+		JR	NZ,GET_6
+		LD	(IX+F_CH_ON),1	;выключить канал
+		JP	GET_7
+;
+GET_6:		CP	0FFH
+		JR	Z,GET_7
+		CALL	RET_DIV
+		LD	(IX+SEK_DIV),L
+		LD	(IX+SEK_DIV+1),H
+		LD	(IX+SNG_DIV),L
+		LD	(IX+SNG_DIV+1),H
+		LD	(IX+F_DIV),1
+GET_7:		CALL	GOTO
+		RET
+;
+; Портаменто ноты
+;
+GET_2:		LD	A,(IX+N_NOTE)
+		CP	0FFH
+		RET	Z
+		CALL	RET_DIV
+		LD	(IX+SEK_DIV),L
+		LD	(IX+SEK_DIV+1),H
+		RET
+;
+;
+RET_DIV:        PUSH	AF
+		AND	0FH
+		LD	L,A
+		LD	H,0
+		ADD	HL,HL
+		LD	E,(IX+SEK_SAMP)
+		LD	D,(IX+SEK_SAMP+1) ;начало текущего инструмента
+		ADD	HL,DE
+		LD	DE,490H-30H
+		ADD	HL,DE
+		LD	E,(HL)
+		INC	HL
+		LD	D,(HL)
+		EX	DE,HL
+		POP	AF
+		SRL	A
+		SRL	A
+		SRL	A
+		SRL	A
+		AND	7
+		RET	Z
+		LD	B,A
+RED_0:		SRL	H
+		RR	L
+		DJNZ	RED_0
+		RET
+;
+;================= Команды ветвления и зацикливания ======================
+;
+GOTO:		LD	A,(IX+N_PARAM)
+		LD	E,A
+		LD	A,(IX+N_COMAND)
+		CP	1
+		JR	Z,TEMP
+		CP	2
+		JR	Z,JMP
+		CP	3
+		JR	Z,BREAK
+		RET
+TEMP:		LD	A,E
+		CP	16
+		JR	NC,TE_0
+		LD	A,16
+TE_0:		SRL	A
+		SRL	A
+		SRL	A
+		SRL	A
+		LD	(TEMP_PE),A
+		LD	(TEMP_CONT),A
+		RET
+JMP:		LD	D,0
+		LD	HL,ORDER
+		ADD	HL,DE
+		LD	(NEXT_ORD),HL
+		RET
+BREAK:		LD	A,1
+		LD	(F_N_PAT),A
+		RET
+;
+;======================== Музыкальные эфекты ============================
+;
+COMMAND:        LD	A,(IX+PIK_VOL)
+		OR	A
+		JR	Z,PI_8
+		DEC	A
+		LD	(IX+PIK_VOL),A
+;
+PI_8:	        LD	A,(IX+N_PARAM)
+		LD	L,A
+		LD	A,(IX+N_COMAND)
+;
+		CP	4
+		JP	Z,SLIDE
+		CP	5
+		JP	Z,POR_DOW
+		CP	6
+		JP	Z,POR_UP
+		CP	9
+		JP	Z,TREMOR
+		LD	(IX+TIM_TREM),0
+		LD	(IX+ON_OFF),1
+		CP	7
+		JP	Z,N_PORT
+		CP	8
+		JP	Z,VIBRATO
+		LD	(IX+VIB_POINT),0
+		CP	10
+;????????       JP	Z,ARPEJO
+		RET
+;
+;------------------------- Портаменто вверх -----------------------------
+;
+POR_UP:		LD	H,0
+		LD	E,(IX+SNG_DIV)
+		LD	D,(IX+SNG_DIV+1)
+		EX	DE,HL
+		OR	A
+		SBC	HL,DE
+		LD	(IX+SNG_DIV),L
+		LD	(IX+SNG_DIV+1),H
+		LD	(IX+F_DIV),1
+		RET
+;
+;------------------------- Портаменто вниз -----------------------------
+;
+POR_DOW:	LD	H,0
+		LD	E,(IX+SNG_DIV)
+		LD	D,(IX+SNG_DIV+1)
+		ADD	HL,DE
+		LD	(IX+SNG_DIV),L
+		LD	(IX+SNG_DIV+1),H
+		LD	(IX+F_DIV),1
+		RET
+;
+;----------------------- Сколжение громкости ---------------------------
+;
+SLIDE:		LD	(IX+F_VOL),1
+		LD	A,L
+		AND	0FH
+		JR	Z,V_UP
+		LD	L,A
+		LD	A,(IX+SNG_VOL)
+		SUB	L
+		LD	(IX+SNG_VOL),A
+		RET	NC
+		LD	(IX+SNG_VOL),0
+		RET
+;
+V_UP:		LD	A,L
+		SRL	A
+		SRL	A
+		SRL	A
+		SRL	A
+		LD	L,A
+		LD	A,(IX+SNG_VOL)
+		ADD	A,L
+		LD	(IX+SNG_VOL),A
+		CP	41H
+		RET	C
+		LD	(IX+SNG_VOL),40H
+		RET
+;
+;------------------------------ Тремор ---------------------------------
+;
+TREMOR:		LD	A,(IX+TIM_TREM)
+		OR	A
+		JR	Z,TR_0
+		DEC	A
+		LD	(IX+TIM_TREM),A
+		RET
+TR_0:		LD	A,(IX+ON_OFF)
+		CP	1
+		JR	Z,TR_1
+		LD	(IX+ON_OFF),1
+		LD	A,(IX+SEK_VOL)
+		LD	(IX+SNG_VOL),A
+		LD	A,L
+		SRL	A
+		SRL	A
+		SRL	A
+		SRL	A
+		LD	(IX+TIM_TREM),A
+		RET
+;
+TR_1:		LD	(IX+ON_OFF),0
+		LD	(IX+SNG_VOL),0
+		LD	A,L
+		AND	0FH
+		LD	(IX+TIM_TREM),A
+		RET
+;
+;------------------------- Арпеджио ------------------------------------
+;
+ARPEJO:		LD	A,(IX+F_ARP)
+		OR	A
+		RET	Z
+		LD	A,(IX+TIM_ARP)
+		OR	A
+		JR	Z,AR_0
+		DEC	A
+		LD	(IX+TIM_ARP),A
+		RET
+AR_0:		LD	H,0
+		LD	A,L
+		LD	A,0FH
+		LD	L,A
+		EX	DE,HL
+		LD	L,(IX+SEK_DIV)
+		LD	H,(IX+SEK_DIV+1)
+		OR	A
+		SBC	HL,DE
+		LD	(IX+SNG_DIV),L
+		LD	(IX+SNG_DIV+1),H
+		LD	(IX+F_DIV),1
+		LD	(IX+F_ARP),0
+		RET
+                RST	18H
+		RST	18H
+		RST	18H
+;
+;-------------------------- Портаменто ноты ----------------------------
+;
+N_PORT:		LD	E,(IX+SNG_DIV)
+		LD	D,(IX+SNG_DIV+1)
+		LD	L,(IX+SEK_DIV)
+		LD	H,(IX+SEK_DIV+1)
+		OR	A
+		PUSH	HL
+		SBC	HL,DE
+		POP	HL
+		RET	Z
+		JP	C,PORT_2
+PORT_0:		LD	C,(IX+N_PARAM)
+		LD	B,0
+		EX	DE,HL
+		ADD	HL,BC
+		EX	DE,HL
+		OR	A
+		PUSH	HL
+		SBC	HL,DE
+		POP	HL
+		JR	NC,PORT_1
+		EX	DE,HL
+PORT_1:		LD	(IX+SNG_DIV),E
+		LD	(IX+SNG_DIV+1),D
+		LD	(IX+F_DIV),1
+		RET
+;
+PORT_2:		LD	C,(IX+N_PARAM)
+		LD	B,0
+		EX	DE,HL
+		OR	A
+		SBC	HL,BC
+		EX	DE,HL
+		OR	A
+		PUSH	HL
+		SBC	HL,DE
+		POP	HL
+		JR	C,PORT_3
+		EX	DE,HL
+PORT_3:		LD	(IX+SNG_DIV),E
+		LD	(IX+SNG_DIV+1),D
+		LD	(IX+F_DIV),1
+		RET
+;
+;----------------------------- Вибрато ---------------------------------
+;
+VIBRATO:        LD	H,(IX+VIB_POINT)
+		LD	E,H
+                LD	D,0
+		PUSH	HL
+		LD	A,L
+		AND	0FH
+		INC	A
+		LD	B,A
+		EX	DE,HL
+		SRA	H
+		RR	L
+		ADD	HL,HL
+		LD	DE,T_VIBRATO
+		ADD	HL,DE
+		LD	E,(HL)
+		INC	HL
+		LD	D,(HL)
+		CALL	I_2
+		CALL	I_2
+		CALL	I_2
+		CALL	I_2
+		CALL	I_2
+		CALL	I_2
+		LD	HL,0
+;
+VIB_1:		ADD	HL,DE
+		DJNZ	VIB_1
+;
+		EX	DE,HL
+		LD	L,(IX+SEK_DIV)
+		LD	H,(IX+SEK_DIV+1)
+		ADD	HL,DE
+		LD	(IX+SNG_DIV),L
+		LD	(IX+SNG_DIV+1),H
+;
+		POP	HL
+		LD	A,H
+		SRL	L
+		SRL	L
+		SRL	L
+		SRL	L
+		ADD	A,L
+		INC	A
+		AND	7FH
+		LD	(IX+VIB_POINT),A
+		LD	(IX+F_DIV),1
+		RET
+;
+I_2:		SRA	D
+		RR	E
+		RET	NC
+		INC	DE
+		RET
+;
+;==================== переход к следующему ордеру =======================
+;
+NEX_ORD:        LD	A,(F_PRINT)
+		OR	A
+		CALL	NZ,ENTER
+		LD	HL,(NEXT_ORD)
+		LD	A,(HL)
+		CP	63H
+		JR	NZ,NEX_O_0
+		LD	HL,ORDER
+		LD	A,1
+		LD	(SEG_A+F_CH_ON),A
+		LD	(SEG_B+F_CH_ON),A
+		LD	(SEG_C+F_CH_ON),A
+		LD	(SEG_D+F_CH_ON),A
+		LD	A,(HL)
+;
+NEX_O_0:        LD	(SEK_ORD),HL
+		INC	HL
+NEX_O_1:        LD	(NEXT_ORD),HL
+		LD	(NUM_PART),A
+		LD	H,A
+		AND	0F0H
+		SRL	A
+		SRL	A
+		SRL	A
+		SRL	A
+		ADD	A,0AH
+		LD	(0F342H),A
+		OR	0C0H
+		LD	BC,07DFFH
+		OUT	(C),A
+		LD	L,0
+		ADD	HL,HL
+		ADD	HL,HL
+		LD	A,H
+		AND	3FH
+		OR	40H
+		LD	H,A	;адрес текущего патерна
+;
+		LD	DE,4
+		LD	(SEG_A+ADR_PAT),HL
+		ADD	HL,DE
+		LD	(SEG_B+ADR_PAT),HL
+		ADD	HL,DE
+		LD	(SEG_C+ADR_PAT),HL
+		ADD	HL,DE
+		LD	(SEG_D+ADR_PAT),HL
+		SUB	A
+		LD	(PAT_POINT+SEG_A),A
+		LD	(PAT_POINT+SEG_B),A
+		LD	(PAT_POINT+SEG_C),A
+		LD	(PAT_POINT+SEG_D),A
+		RET
+;
+;
+;========================= PROGRAMM NMI ================================
+;
+NMI:		PUSH	HL
+		PUSH	DE
+		PUSH	BC
+		PUSH	AF
+;
+		LD	BC,DMACOM
+		IN	E,(C)	;читаем запрос перепрограммирования
+;
+		MA_NMI	SEG_A,DMA_A,58H,0H
+		MA_NMI	SEG_B,DMA_B,59H,1H
+		MA_NMI	SEG_C,DMA_C,5AH,2H
+		MA_NMI	SEG_D,DMA_D,5BH,3H
+;
+NMI_3:		POP	AF
+		POP	BC
+		POP	DE
+		POP	HL
+		RETN
+;
+;================= Установка векторов прерывания ============================
+;
+SET_INT:	DI
+		LD	HL,INT_H
+		LD	DE,BUF_INT
+		LD	BC,3
+		LDIR
+		LD	HL,VECTOR
+		LD	DE,INT_H
+		LD	BC,3
+		LDIR
+
+		LD	HL,NMI_H
+		LD   	DE,BUF_NMI
+		LD	BC,3
+		LDIR
+
+		LD	A,0C3H
+		LD	(NMI_H),A
+		LD	HL,NMI
+		LD	(NMI_H+1),HL
+		RET
+;
+BUF_NMI:        JP	NMI
+VECTOR:         JP	PRG_INT
+		RET
+;
+;============== Востановление векторов прерывания ========================
+;
+GET_INT:	DI
+		LD	HL,BUF_INT
+		LD	DE,INT_H  ;сохраним вектор старый
+		LD	BC,3
+		LDIR
+		LD	HL,BUF_NMI
+		LD	DE,NMI_H	;сохраним вектор старый
+		LD	BC,3
+		LDIR
+		RET
+;
+;=================  инициализация КОЭФмЦмЕНТОВ ДЕЛЕНмЯ =======================
+;                       ;
+INI_DIV:        LD	IX,INST
+		LD	IY,I_DIV
+		LD	DE,20H
+		LD	B,31
+IDIV_0:		PUSH	DE
+		PUSH	BC
+		CALL	IDIV_1
+		POP	BC
+		POP	DE
+		ADD	IX,DE
+		ADD	IY,DE
+		DJNZ	IDIV_0
+		RET
+;
+;==================== Вычисление коэфициента деления =========================
+;
+IDIV_1:		LD	E,(IX+18H)
+		LD	D,(IX+19H)	;DE = частота инструмента
+		LD	BC,2100H	;стандартная частота
+		CALL	DIV	;коэфициент отклонения частоты
+		LD	E,C
+		LD	D,B
+		PUSH	IY
+		POP	BC	;таблица делителей на текущий инструмент
+;
+		LD	A,12	;количество нот
+		LD	HL,ST_DIV	;стандартные делители
+IDIV_2:		PUSH	AF
+		PUSH	HL
+		PUSH	BC
+		LD	C,(HL)
+		INC	HL
+		LD	B,(HL)   ;BC стандартный делитель
+		CALL	MUL      ;HLBCј*DE
+		POP	HL
+		LD	(HL),C
+		INC	HL
+		LD	(HL),B
+		INC	HL
+		PUSH	HL
+		POP	BC
+		POP	HL
+		POP	AF
+		INC	HL
+		INC	HL
+		DEC	A
+		JR	NZ,IDIV_2
+		RET
+; стандартные коэфициенты деления
+ST_DIV:		DW	766H,6FCH,697H,639H,5DFH,58BH
+		DW	53BH,4F0H,4A9H,466H,427H,3EBH
+;
+;===================== Чтение файла в память =============================;
+LOAD:		LD	HL,5CH+12
+		LD	DE,5CH+13
+		LD	BC,24
+		LD	(HL),0
+		LDIR
+		LD	A,"S"
+		LD	(5CH+9),A	;.STM по умолчанию
+		LD	A,"T"
+		LD	(5CH+10),A
+		LD	A,"M"
+		LD	(5CH+11),A
+		CALL	OPEN
+		LD	HL,10H
+		LD	(5CH+14),HL	;длинна блока
+		LD	DE,DATA	;установка DMA
+		BDOS	1AH
+		LD	HL,49H
+		LD	DE,5CH
+		BDOS	27H
+;
+;-------------------- Проверка правильности версии --------------------------
+;
+		LD	DE,BAD_VERS
+		LD	A,(DATA+1EH)
+		CP	2
+		JP	NZ,ERROR
+		LD	DE,BAD_NUM
+		LD	A,(DATA+1DH)
+		CP	2
+		JP	NZ,ERROR
+		LD	DE,LOADING
+		BDOS	9
+		LD	DE,DATA
+		CALL	PRINT
+;
+;---------------------- Загрузка патернов --------------------------------
+;
+		LD	DE,4000H
+		BDOS	1AH	;патерны сюда
+		LD	HL,400H
+		LD	C,0AH
+LO_0:		PUSH	BC
+		PUSH	HL
+		LD	H,40H
+		LD	A,C
+		CALL	24H
+		POP	HL
+		LD	DE,5CH
+                BDOS	27H	;считаем  32 килобайт
+		OR	A
+		JR	NZ,LO_1
+		LD	HL,400H
+		POP	BC
+		INC	C
+		JR	LO_0
+		RET
+LO_1:		POP	BC      ;Последняя страница для инструментов
+		LD	A,(DATA+33)	;количество патернов
+		LD	L,A
+		LD	H,0
+		ADD	HL,HL	;*2
+		ADD	HL,HL	;*4
+		ADD	HL,HL	;*8
+		ADD	HL,HL	;*16
+		ADD	HL,HL	;*32
+		ADD	HL,HL	;*64
+		LD	A,H
+		RRCA
+		RRCA
+		AND	1FH
+		ADD	A,0AH
+		ADD	HL,HL	;*128
+		ADD	HL,HL	;*256
+		ADD	HL,HL	;*512
+		ADD	HL,HL	;*1024
+		RES	7,H
+                SET	6,H
+		INC	C
+LO_3:		PUSH	AF
+		PUSH	HL
+		PUSH	BC
+		LD	H,40H
+		CALL	24H
+		POP	BC
+		POP	HL
+LO_2:		LD	A,(HL)
+		XOR	80H
+		LD	(HL),A
+		INC	HL
+		LD	A,H
+		CP	80H
+		JR	NZ,LO_2
+		POP	AF
+		LD	HL,4000H
+		INC	A
+		CP	C
+		JR	NZ,LO_3
+		LD	A,05H
+		LD	H,40H
+		CALL	24H
+		RET
+;
+;------------------------ Печать строки до 0 -----------------------------
+;
+PRINT:		LD	A,(DE)
+		OR	A
+		RET	Z
+		PUSH	DE
+		LD	E,A
+		LD	C,2
+		BDOS	2
+		POP	DE
+		INC	DE
+		JR	PRINT
+;
+;--------------------------- Печать HEX ---------------------------------
+;
+HEX:		PUSH	IX
+	        PUSH	AF
+		AND	0F0H
+		SRL	A
+		SRL	A
+		SRL	A
+		SRL	A
+		CALL	HE_X
+		POP	AF
+		AND	0FH
+		CALL	HE_X
+		POP	IX
+		RET
+;
+HE_X:		CP	0AH
+		JR	NC,HE_0
+		ADD	A,30H
+		JR	HE_1
+HE_0:		ADD	A,41H-0AH
+HE_1:		RST	30H
+		DB	8,18H,0
+		RET
+;
+ENTER:          PUSH	IX
+		LD	A,0AH
+		RST	30H
+		DB	8,18H,0
+		LD	A,0DH
+		RST	30H
+		DB	8,18H,0
+		POP	IX
+		RET
+SPASE:		PUSH	IX
+		LD	A,1CH
+		RST	30H
+		DB	8,18H,0
+		POP	IX
+		RET	
+;
+;================== Печать строки нотиы ===============================;
+OUT_PUT:	LD	A,(IX+N_NOTE)
+		CALL	HEX
+		CALL	SPASE
+		LD	A,(IX+N_SAMPLE)
+		CALL	HEX
+		CALL	SPASE
+		LD	A,(IX+N_VOLUME)
+		CALL	HEX
+		CALL	SPASE
+		LD	A,(IX+N_COMAND)
+		OR	A
+		JR	Z,OU_0
+		ADD	A,40H
+		JR	OU_1
+OU_0:		LD	A,'.'
+OU_1:		PUSH	IX
+		RST	30H
+		DB	8,18H,0
+		POP	IX
+		EI
+		LD	A,(IX+N_PARAM)
+		CALL	HEX
+		CALL	SPASE
+		CALL	SPASE		
+		CALL	SPASE
+		RET
+;
+;==================== Открывает ФАЙЛ для доступа ========================;
+OPEN:           LD	DE,5CH
+                BDOS	0FH
+		LD	HL,0
+		LD	(5CH+33),HL ;number block
+		OR	A
+		RET	Z
+		LD	DE,OP_0
+		JP	ERROR
+;
+OP_0:		DEFM	' ФАЙЛ не найден $'
+;
+;======================= Сообщения об ошибках ============================;
+ERROR:		BDOS	9
+		RST	0
+;
+;========================== I/O PORTS INIT ===============================;
+INI_PRT:		LD	BC,TIMUP0	;Timers
+		LD	A,034H
+		OUT	(C),A	;A
+		LD	A,074H
+		OUT	(C),A	;B
+		LD	A,0B4H
+		OUT	(C),A	;C
+		LD	BC,TIMUP1
+		LD	A,034H
+		OUT	(C),A	;D
+		LD	A,076H
+		OUT	(C),A	;E
+		LD	BC,TIM_E
+		LD	A,4	;E
+		OUT	(C),A
+		SUB	A
+		OUT	(C),A	;E
+		LD	BC,DMARES	;Dma
+		OUT	(C),A	;Reset
+		LD	BC,DMACOM
+		SUB	A
+		OUT	(C),A	;Dma command
+		LD	BC,DMAMASK
+		LD	HL,0405H
+		OUT	(C),L
+		OUT	(C),H
+		LD	HL,0607H
+		OUT	(C),L
+		OUT	(C),H
+		RET
+;
+;======================= Умножение 16*16 =================================;
+;		HLBCј*DE
+;
+MUL:		LD	HL,0
+		LD	A,B
+		LD	B,11H
+		JR	MUL_1
+;
+MUL_3:		JR	NC,MUL_2
+		ADD	HL,DE
+MUL_2:		RR	H
+		RR	L
+MUL_1:		RR	A
+		RR	C
+		DJNZ	MUL_3
+		LD	B,A
+		RET
+;
+;======================== Деление 2 байтов ===============================;
+;		BC = BC / DE
+;
+DIV:		LD	HL,0
+		LD	A,B
+		LD	B,10H
+		RL	C
+		RLA
+DIV_0:		RL	L
+		RL	H
+		JR	C,DIV_3
+		SBC	HL,DE
+		JR	NC,DIV_1
+		ADD	HL,DE
+DIV_1:		CCF
+DIV_2:		RL	C
+		RLA
+		DJNZ	DIV_0
+		LD	B,A
+; Целое  от  ( BC,HL )
+		ADD	HL,HL
+		OR	A
+		SBC	HL,DE	;( Остаток * 2 ) - делител
+		RET	C
+		INC	BC
+		RET
+;
+DIV_3:		OR	A
+		SBC	HL,DE
+		JR	DIV_2
+;
+;=========================================================================;
+BAD_NUM:	DB	'Не совпадает номер $'
+BAD_VERS:	DB	'Не совпадает номер версии $'
+LOADING:	DB	'Loading : $'
+DEMO:		DB	'           ALESTE    mc 520 EX           ',0
+		DB	'    Персональный компьютер для работы    ',0
+		DB	'       м    О Т Д Ы Х А    !  !  !       ',0
+		DB	'              Много памяти               ',0
+		DB	'           Удобная клавиатура            ',0
+		DB	'          Великолепная графика           ',0
+		DB	'           мгры на любой вкус            ',0
+		DB	'            м САМОЕ  ГЛАВНОЕ             ',0
+		DB	'    м    С А М О Е     Г Л А В Н О Е     ',0
+		DB	'          Потрясающий звук  !!!          ',0
+		DB	'Звук, который вы не слышали на СПЕКТРУМЕ ',0
+		DB	'Звук, которого вы не услышите без АЛЕСТЫ ',0
+		DB	'    Совместимость по файлам с IBM PC     ',0
+		DB	'    м по модулям со SCREAM TRACKER       ',0
+		DB	'      м все это без SOUND BLASTERа       ',0
+		DB	'  СМОТРмТЕ !  СЛУШАЙТЕ !  ТАЩмТЕСЬ !!!!  ',0
+		DB	1H
+;
+T_VIB_1:        DB	000h, 000h, 018h, 000h, 031h, 000h, 04Ah, 000h
+		DB	061h, 000h, 078h, 000h, 08Dh, 000h, 0A1h, 000h
+		DB	0B4h, 000h, 0C5h, 000h, 0D4h, 000h, 0E0h, 000h
+		DB	0EBh, 000h, 0F4h, 000h, 0FAh, 000h, 0FDh, 000h
+		DB	0FFh, 000h, 0FDh, 000h, 0FAh, 000h, 0F4h, 000h
+		DB	0EBh, 000h, 0E0h, 000h, 0D4h, 000h, 0C5h, 000h
+		DB	0B4h, 000h, 0A1h, 000h, 08Dh, 000h, 078h, 000h
+		DB	061h, 000h, 04Ah, 000h, 031h, 000h, 018h, 000h
+		DB	000h, 000h, 0E8h, 0FFh, 0CFh, 0FFh, 0B6h, 0FFh
+		DB	09Fh, 0FFh, 088h, 0FFh, 073h, 0FFh, 05Fh, 0FFh
+		DB	04Ch, 0FFh, 03Bh, 0FFh, 02Ch, 0FFh, 020h, 0FFh
+		DB	015h, 0FFh, 00Ch, 0FFh, 006h, 0FFh, 003h, 0FFh
+		DB	001h, 0FFh, 003h, 0FFh, 006h, 0FFh, 00Ch, 0FFh
+		DB	015h, 0FFh, 020h, 0FFh, 02Ch, 0FFh, 03Bh, 0FFh
+		DB	04Ch, 0FFh, 05Fh, 0FFh, 073h, 0FFh, 088h, 0FFh
+		DB	09Fh, 0FFh, 0B6h, 0FFh, 0CFh, 0FFh, 0E8h, 0FFh
+		END
+
