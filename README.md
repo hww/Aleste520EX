@@ -1,23 +1,24 @@
 # Aleste520EX
-Aleste 502EX is russian clone of Amstrad CPC128 created at begin of 1990s. See more on [cpcwiki](http://cpcwiki.eu/index.php/Aleste_520EX)
+
+The Aleste 502EX was a Russian clone of the Amstrad CPC128, created at the start of the 1990s. [cpcwiki](http://cpcwiki.eu/index.php/Aleste_520EX)
 
 ## Introduction
 
-The Aleste computer was a clone of the Amstrad CPC, using the MSX-DOS operating system.The Russian version of the computer’s name is Alesta.
+The Aleste computer was a clone of the Amstrad CPC, using the MSX-DOS operating system. The Russian version of the computer's name is Alesta.
 
-Some of Aleste’s special features were borrowed from MSX2, Atari ST and Amiga.
+Some of Alesta's special features were borrowed from the MSX2, Atari ST and Amiga systems.
 
 Alesta was popular among MSX fans since it had a similar memory organization and disk capacity. The operating system MSX-DOS.
 
-Alesta’s MSX compatibility was incomplete, but Alesta computer was available, whereas the MSX could not be had. Some enthusiasts built their own Aleste; computers at home from kits, while others bought complete units in stores.
+Alesta's MSX compatibility was incomplete, but Alesta computer was available, whereas the MSX could not be had. Some enthusiasts built their own Alesta computers at home from kits, while others bought complete units in stores.
 
 The special pride of Aleste was the MagicSound audio, with which it was possible to reproduce STM and S3M (similar Scream Tracker, for those unfamiliar with that name) sounds. Audio quality was at Amiga level, 4 channels of eight bit samples. The Aleste computer sounded strong, and indeed in those Covox times it was the top of perfection.
 
-However, games for Amstrad CPC were not popular and this perhaps was the main disadvantage of the Aleste computer.
+However, games for Amstrad CPC were not popular. This was perhaps the Alesta's main disadvantage.
 
-The games BIOS was created for Aleste with an emulator for the MSX2’s VDP. With the games BIOS, all it took was replacing the first several kilobytes a of an MSX2 game and the game would run on Aleste. Despite the MSX video processor being optimized for games, the 8 MHz Aleste was still fast enough to simulate the VDP, allowing many games to be played. The FireBird game, a typical «vertical scroller», worked very well.
+A games BIOS was created for Aleste that included an emulator for the MSX2's VDP. With the games BIOS, MSX2 games could run on Aleste after replacing the first few kilobytes of their code. The MSX video processor was of course optimized for games, but the 8 MHz Aleste was still fast enough to simulate its VDP, allowing many games to be played. The FireBird game, a typical Â«vertical scrollerÂ», worked very well.
 
-One of the programmers who participated in the project created for Aleste a light-processor expansion board using the DMX512 protocol to control professional lighting systems. This board was used to script and control light sources in theaters.
+One of the programmers who participated in the project created a light-processor expansion board for Aleste using the DMX512 protocol to control professional lighting systems. This board was used to script and control light sources in theaters.
 
 ## Specs
 
