@@ -125,6 +125,6 @@ Comparison shows the difference between original and patched VKILLER. Most of ch
 
 Based on Caprice32 implementation [Caprice32 Aleste](https://github.com/hww/Caprice32-Aleste)
 
-## Aleste 520EX Recreate project
+## Aleste 520M Recreate project
 
-Alternative PCB layout with [Kicad](https://github.com/LasDesu/Aleste-520EX)
+Alternative PCB layout with Kicad [Aleste520M](https://github.com/LasDesu/Aleste-520EX)
