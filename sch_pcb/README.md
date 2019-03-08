@@ -2,20 +2,20 @@
 
 ## Original Aleste 520EX
 
-- *original-sch-gif* cirquit (GIF image file format)
+- *original-sch-gif* circuit (GIF image file format)
 - *original-pcb-pdf* PCB (PDF file format)
 - *original-sch-pcad* cirquit (PCAD 4xx file format)
 
-Do not use this files, it is just for history.
+Do not use these files, they're just here for historical reference.
 
-N.B. Original Aleste has a keyboatrix converter circuit. 
+N.B. The original Aleste has a keyboard matrix converter circuit. 
 The circuit converts Aleste's 10x8 keyboard to CPC keyboard matrix.
-By modifying ROM can be adopted some other matrix. 
+Other matrix conversions are possible by modifying the ROM. 
 
 ## Aleste 520M 
 
-Recreated project with open source files. 
-With eliminating the keyboard converter. 
+This project is now available with open source files. 
+The 520EX's keyboard converter has been eliminated. 
 Use CPC keyboard matrix or custom keyboard converter.
 
 - *aleste-520m-kicad* SCH,PCB (Kicad files)  
@@ -26,10 +26,6 @@ Autor's site [Aleste520M](https://github.com/LasDesu/Aleste-520EX)
 
 - *aleste-520ex-pcad2k2* Alternative version with PCAD2002 
 
-Use this if you want to build original Aleste 520ex today.
+Use this if you want to build an original Aleste 520EX today.
 
 [Autor's site](http://forum.tslabs.info/viewtopic.php?p=26593)
-
-
-
-
