@@ -1,0 +1,117 @@
+********************************************************************************
+***                            Micro-Cap 10.0.4.0                            ***
+***                                                                          ***
+***                                                                          ***
+***                            Dynamic DC of dac                             ***
+***                           10/4/2017 1:13:55 PM                           ***
+********************************************************************************
+
+*****************************************************
+***                Temperature=27                 ***
+*****************************************************
+
+Temperature=27 
+
+DC Operating Point Voltages
+===========================
+Node         Voltage  Node         Voltage  Node         Voltage 
+1             4.862   2             2.941   3             2.217  
+4             4.737   5             2.941   6             5.000  
+OUT           4.987  
+
+
+Operating Point for Devices of Type Bipolar Junction Transistors NPN
+====================================================================
+Instance:                Q1             Q2
+Using model:         2N3904         2N3904
+
+Beta Terms:
+BETADC             187.603        187.376 
+BETAAC             184.871        184.639 
+
+Capacitance Terms:
+CPI                106.542p       106.570p
+CMU                  2.466p         2.503p
+CBX                  0.000          0.000 
+CJS                  0.000          0.000 
+
+Conductance Terms:
+GM                 179.300m       179.124m
+
+Current Terms:
+IB                  29.402u        29.410u
+IC                   5.516m         5.511m
+
+Resistance Terms:
+RPI                  1.031K         1.031K
+RX                   0.000          0.000 
+RO                  18.806K        18.801K
+
+Voltage Terms:
+VBE                724.151m       724.151m
+VBC                 -1.921         -1.796 
+VCE                  2.645          2.520 
+
+Frequency Terms:
+FT               261.781MEG     261.369MEG
+
+Power DC Terms:
+PD                  14.611m        13.908m
+PS                   0.000          0.000 
+
+DC Pin Currents:
+Ib                  29.402u        29.410u
+Ic                   5.516m         5.511m
+Ie                  -5.545m        -5.540m
+Is                   0.000          0.000 
+
+Condition:
+State                   LIN            LIN
+
+Device Variables:
+area                 1.000          1.000 
+vbe                  0.000          0.000 
+vce                  0.000          0.000 
+
+
+
+Operating Point for Devices of Type Resistor
+============================================
+Instance:                 R1             R2             R3             R4
+V                    -2.217       -137.899m      -263.011m       -12.524m
+Power DC Terms:
+PD                   24.578m       760.649u         1.383m         3.137u
+
+DC Pin Currents:
+Ir                  -11.085m        -5.516m        -5.260m      -250.487u
+
+Device Variables:
+tc1                   0.000          0.000          0.000          0.000 
+tc2                   0.000          0.000          0.000          0.000 
+
+
+Instance:                 R5             R6             R7
+V                    -2.059         -2.941        250.487m
+Power DC Terms:
+PD                  423.845u       432.548u        62.744u
+
+DC Pin Currents:
+Ir                 -205.875u      -147.063u       250.487u
+
+Device Variables:
+tc1                   0.000          0.000          0.000 
+tc2                   0.000          0.000          0.000 
+
+
+
+Operating Point for Devices of Type SPICE Source
+================================================
+Instance:                V1             V2
+V                    5.000          0.000 
+Power DC Terms:
+PG                  56.163m         0.000 
+
+DC Pin Currents:
+ISource            -11.233m       -29.402u
+
+

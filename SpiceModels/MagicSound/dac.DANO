@@ -1,0 +1,99 @@
+********************************************************************************
+***                            Micro-Cap 10.0.4.0                            ***
+***                                                                          ***
+***                                                                          ***
+***                            Dynamic AC of dac                             ***
+***                           10/4/2017 1:13:53 PM                           ***
+********************************************************************************
+
+*****************************************************
+***                Temperature=27                 ***
+*****************************************************
+
+Temperature=27 
+
+AC Voltages at Frequency=1e+006 (Mag, Degrees)
+==============================================
+Node                Voltage  Node                Voltage 
+1          179.353m,179.958  2             93.493m,1.209 
+3             42.795m,2.598  4        332.247m,-125.731m 
+5            6.819m,163.188  6                       0,0 
+OUT       15.821m,-125.731m 
+
+
+AC values for Bipolar Junction Transistors NPN (Mag, Degrees)
+=============================================================
+Instance:                        Q1                     Q2
+Using model:                 2N3904                 2N3904
+
+Power AC Terms:
+PG                  1.673m,461.944m       2.092m,-422.606m
+PD              81.193u,-1.392E-025     78.525u,3.018E-019
+PS                       2.229u,-90             2.821u,-90
+
+AC Pin Currents:
+Ib                   49.719u,38.615       49.146u,-140.403
+Ic                  7.174m,-42.185m         6.961m,179.874
+Ie                  7.213m,-179.795        6.999m,131.371m
+Is                              0,0                    0,0
+
+Device Variables:
+area                         1.000                  1.000 
+vbe                          0.000                  0.000 
+vce                          0.000                  0.000 
+
+
+
+AC values for Resistor (Mag, Degrees)
+=====================================
+Instance:                         R1                     R2                     R3
+
+Power AC Terms:
+PD                          9.157u,0         1.287m,-0.005f               2.208m,0
+
+AC Pin Currents:
+Ir                 213.973u,-177.402         7.174m,179.958       6.645m,-125.731m
+
+Device Variables:
+tc1                           0.000                  0.000                  0.000 
+tc2                           0.000                  0.000                  0.000 
+
+
+Instance:                         R4                     R5                     R6
+
+Power AC Terms:
+PD                    5.006u,-0.019f                4.65n,0               2.325n,0
+
+AC Pin Currents:
+Ir                316.426u,-125.731m       681.923n,163.188       340.961n,-16.812
+
+Device Variables:
+tc1                           0.000                  0.000                  0.000 
+tc2                           0.000                  0.000                  0.000 
+
+
+Instance:                         R7
+
+Power AC Terms:
+PD                        100.125u,0
+
+AC Pin Currents:
+Ir                  316.426u,179.874
+
+Device Variables:
+tc1                           0.000 
+tc2                           0.000 
+
+
+
+AC values for SPICE Source (Mag, Degrees)
+=========================================
+Instance:                        V1                     V2
+
+Power AC Terms:
+PG                              0,0         4.972u,-38.615
+
+AC Pin Currents:
+ISource           213.651u,-177.372       49.719u,-141.385
+
+

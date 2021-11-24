@@ -1,0 +1,18 @@
+
+Digital Warning
+Preb input width violation at t=0.000194836
+Device X1.U1
+Required Preb input width is 2.5e-008
+Measured Preb input width is 2.4682e-008
+
+Digital Warning
+Preb input width violation at t=0.000324836
+Device X1.U1
+Required Preb input width is 2.5e-008
+Measured Preb input width is 2.4683e-008
+
+Digital Warning
+Preb input width violation at t=0.000454836
+Device X1.U1
+Required Preb input width is 2.5e-008
+Measured Preb input width is 2.4683e-008

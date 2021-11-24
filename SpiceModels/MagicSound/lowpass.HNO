@@ -1,0 +1,1333 @@
+********************************************************************************
+***                            Micro-Cap 10.0.4.0                            ***
+***                                                                          ***
+***                                                                          ***
+***                 Harmonic Distortion Analysis of lowpass                  ***
+***                          10/3/2017 11:41:38 PM                           ***
+********************************************************************************
+Limits
+======
+Fundamental Frequency      Log 20K,20
+Name of Input Source       V1
+Input Source Amplitude     List 0.25,0.001
+Name of Load Resistor      R2
+Noise Frequency Range      20K,20
+Temperature                Linear 27
+Max Simulation Cycles      50
+Steady State Tolerance     1u
+Time Step Ratio            1m
+Highest Harmonic in THD    7
+Number of Time Points      51
+Number of Frequency Points 51
+Run Options                Normal
+State Variables            Zero
+Operating Point            On
+
+
+*****************************************************
+***                Temperature=27                 ***
+***                   VIN=0.001                   ***
+***                     F=20                      ***
+***                  RLoad=2200                   ***
+***           Vnoise(RMS)=4.04581e-006            ***
+***              Vnoise=5.72164e-006              ***
+***        Noise Frequency Range=20 to 20K        ***
+*****************************************************
+
+Temperature=27 VIN=0.001 F=20 
+
+Model parameters for devices of type Bipolar Junction Transistors NPN
+=====================================================================
+Instance:              Q1              Q2   
+Using model:       2N3904          2N3904   
+LEVEL                   1(*)            1(*)
+AF                 1.000 (*)       1.000 (*)
+BF               326.427         326.427    
+BR               528.632m        528.632m   
+CJC                3.664p          3.664p   
+CJE                4.421p          4.421p   
+CJS                0.000 (*)       0.000 (*)
+EG                 1.110 (*)       1.110 (*)
+FC               500.000m(*)     500.000m(*)
+GAMMA             10.000p(*)      10.000p(*)
+IKF               26.738m         26.738m   
+IKR              980.247         980.247    
+IRB                0.000 (*)       0.000 (*)
+IS                10.018f         10.018f   
+ISC              100.000p        100.000p   
+ISE              999.933f        999.933f   
+ISS                0.000 (*)       0.000 (*)
+ITF               10.103m         10.103m   
+KF                 0.000 (*)       0.000 (*)
+MJC              300.000m        300.000m   
+MJE              423.145m        423.145m   
+MJS                0.000 (*)       0.000 (*)
+NC                 2.000 (*)       2.000 (*)
+NE                 1.723           1.723    
+NF                 1.018           1.018    
+NK               500.000m(*)     500.000m(*)
+NR                 1.000 (*)       1.000 (*)
+NS                 1.000 (*)       1.000 (*)
+PTF                0.000 (*)       0.000 (*)
+QCO                0.000 (*)       0.000 (*)
+QUASIMOD           0.000 (*)       0.000 (*)
+RB                 0.000 (*)       0.000 (*)
+RBM                0.000 (*)       0.000 (*)
+RC                 0.000 (*)       0.000 (*)
+RCO                0.000 (*)       0.000 (*)
+RE                 1.475           1.475    
+T_ABS           UNDEFINED(*)    UNDEFINED(*)
+T_MEASURED      UNDEFINED(*)    UNDEFINED(*)
+T_REL_GLOBAL    UNDEFINED(*)    UNDEFINED(*)
+T_REL_LOCAL     UNDEFINED(*)    UNDEFINED(*)
+TF               477.297p        477.297p   
+TR               595.818n        595.818n   
+TRB1               0.000 (*)       0.000 (*)
+TRB2               0.000 (*)       0.000 (*)
+TRC1               0.000 (*)       0.000 (*)
+TRC2               0.000 (*)       0.000 (*)
+TRE1               0.000 (*)       0.000 (*)
+TRE2               0.000 (*)       0.000 (*)
+TRM1               0.000 (*)       0.000 (*)
+TRM2               0.000 (*)       0.000 (*)
+VAF              101.811         101.811    
+VAR                0.000 (*)       0.000 (*)
+VG                 1.206 (*)       1.206 (*)
+VJC              700.503m        700.503m   
+VJE                1.000           1.000    
+VJS              750.000m(*)     750.000m(*)
+VO                10.000 (*)      10.000 (*)
+VTF               10.000          10.000    
+XCJC               1.000 (*)       1.000 (*)
+XTB                0.000 (*)       0.000 (*)
+XTF              500.027m        500.027m   
+XTI                3.000 (*)       3.000 (*)
+(*) Default Parameter
+
+
+
+Model parameters for devices of type Bipolar Junction Transistors PNP
+=====================================================================
+Instance:              Q3   
+Using model:       2N3906   
+LEVEL                   1(*)
+AF                 1.000 (*)
+BF               205.681    
+BR                 1.820    
+CJC                6.235p   
+CJE                5.991p   
+CJS                0.000 (*)
+EG                 1.110 (*)
+FC               500.001m   
+GAMMA             10.000p(*)
+IKF               90.701m   
+IKR              619.972    
+IRB                0.000 (*)
+IS                 9.935f   
+ISC                6.458p   
+ISE                1.001p   
+ISS                0.000 (*)
+ITF                9.953m   
+KF                 0.000 (*)
+MJC              318.069m   
+MJE              300.000m   
+MJS                0.000 (*)
+NC                 2.000 (*)
+NE                 1.988    
+NF                 1.052    
+NK               500.000m(*)
+NR                 1.000 (*)
+NS                 1.000 (*)
+PTF                0.000 (*)
+QCO                0.000 (*)
+QUASIMOD           0.000 (*)
+RB                 0.000 (*)
+RBM                0.000 (*)
+RC                 0.000 (*)
+RCO                0.000 (*)
+RE               855.895m   
+T_ABS           UNDEFINED(*)
+T_MEASURED      UNDEFINED(*)
+T_REL_GLOBAL    UNDEFINED(*)
+T_REL_LOCAL     UNDEFINED(*)
+TF               566.528p   
+TR               194.557n   
+TRB1               0.000 (*)
+TRB2               0.000 (*)
+TRC1               0.000 (*)
+TRC2               0.000 (*)
+TRE1               0.000 (*)
+TRE2               0.000 (*)
+TRM1               0.000 (*)
+TRM2               0.000 (*)
+VAF               57.367    
+VAR                0.000 (*)
+VG                 1.206 (*)
+VJC              700.104m   
+VJE              705.438m   
+VJS              750.000m(*)
+VO                10.000 (*)
+VTF               10.000    
+XCJC               1.000 (*)
+XTB                0.000 (*)
+XTF              500.002m   
+XTI                3.000 (*)
+(*) Default Parameter
+
+
+
+DC Operating Point Voltages
+===========================
+Node         Voltage  Node         Voltage  Node         Voltage 
+IN            2.500   2             2.500   3             4.921  
+4             2.413   5             1.751   6             5.000  
+7             1.716   8             1.068   OUT           0.000  
+10            2.464  
+
+
+Operating Point for Devices of Type Bipolar Junction Transistors NPN
+====================================================================
+Instance:                 Q1              Q2
+Using model:          2N3904          2N3904
+
+Beta Terms:
+BETADC              153.285         138.848 
+BETAAC              190.197         179.041 
+
+Capacitance Terms:
+CPI                  20.830p         15.280p
+CMU                   2.321p          2.175p
+CBX                   0.000           0.000 
+CJS                   0.000           0.000 
+
+Conductance Terms:
+GM                   29.333m         18.000m
+
+Current Terms:
+IB                    5.180u          3.472u
+IC                  794.065u        482.070u
+
+Resistance Terms:
+RPI                   6.484K          9.947K
+RX                    0.000           0.000 
+RO                  131.373K        218.008K
+
+Voltage Terms:
+VBE                 661.880m        647.789m
+VBC                  -2.508          -3.284 
+VCE                   3.170           3.932 
+
+Frequency Terms:
+FT                201.653MEG      164.128MEG
+
+Power DC Terms:
+PD                    2.521m          1.898m
+PS                    0.000           0.000 
+
+DC Pin Currents:
+Ib                    5.180u          3.472u
+Ic                  794.065u        482.070u
+Ie                 -799.245u       -485.542u
+Is                    0.000           0.000 
+
+Condition:
+State                    LIN             LIN
+
+Device Variables:
+area                  1.000           1.000 
+vbe                   0.000           0.000 
+vce                   0.000           0.000 
+
+
+
+Operating Point for Devices of Type Bipolar Junction Transistors PNP
+====================================================================
+Instance:                 Q3
+Using model:          2N3906
+
+Beta Terms:
+BETADC               -2.618 
+BETAAC               77.666m
+
+Capacitance Terms:
+CPI                   6.210p
+CMU                   3.619p
+CBX                   0.000 
+CJS                   0.000 
+
+Conductance Terms:
+GM                    7.080p
+
+Current Terms:
+IB                   -4.518p
+IC                   11.828p
+
+Resistance Terms:
+RPI                  10.969G
+RX                    0.000 
+RO                  896.776G
+
+Voltage Terms:
+VBE                 -79.407m
+VBC                   3.170 
+VCE                  -3.249 
+
+Frequency Terms:
+FT                  114.649m
+
+Power DC Terms:
+PD                   38.075p
+PS                    0.000 
+
+DC Pin Currents:
+Ib                    4.518p
+Ic                  -11.828p
+Ie                    7.310p
+Is                    0.000 
+
+Condition:
+State                    OFF
+
+Device Variables:
+area                  1.000 
+vbe                   0.000 
+vce                   0.000 
+
+
+
+Operating Point for Devices of Type Resistor
+============================================
+Instance:                  R2              R3              R4              R5
+V                      0.000           1.068          79.407m        -35.615m
+Power DC Terms:
+PD                     0.000         518.653u         63.054u         57.655n
+
+DC Pin Currents:
+Ir                     0.000         485.542u        794.065u         -1.619u
+
+Device Variables:
+tc1                    0.000           0.000           0.000           0.000 
+tc2                    0.000           0.000           0.000           0.000 
+
+
+Instance:                  R6              R7              R8              R9
+V                     35.615m         51.803m         34.719m          1.751 
+Power DC Terms:
+PD                   126.841n        268.358n        120.542n          1.393m
+
+DC Pin Currents:
+Ir                     3.561u          5.180u          3.472u        795.773u
+
+Device Variables:
+tc1                    0.000           0.000           0.000           0.000 
+tc2                    0.000           0.000           0.000           0.000 
+
+
+
+Operating Point for Devices of Type Capacitor
+=============================================
+Instance:                  C2              C3              C4              C5
+V                     -1.068           1.716           2.413        -713.684m
+Power DC Terms:
+PS                     0.000           0.000           0.000           0.000 
+
+DC Pin Currents:
+Ic                     0.000           0.000           0.000           0.000 
+
+Device Variables:
+ic                     0.000           0.000           0.000           0.000 
+
+
+
+Operating Point for Devices of Type SPICE Source
+================================================
+Instance:                 V1              V2              V3
+V                     0.000           5.000           2.500 
+Power DC Terms:
+PG                    0.000           6.381m         12.951u
+
+DC Pin Currents:
+ISource              -3.561u         -1.276m         -5.180u
+
+
+
+*****************************************************
+***                Temperature=27                 ***
+***                   VIN=0.25                    ***
+***                     F=20                      ***
+***                  RLoad=2200                   ***
+***           Vnoise(RMS)=4.04581e-006            ***
+***              Vnoise=5.72164e-006              ***
+***        Noise Frequency Range=20 to 20K        ***
+*****************************************************
+
+Temperature=27 VIN=0.25 F=20 
+
+Model parameters for devices of type Bipolar Junction Transistors NPN
+=====================================================================
+Instance:              Q1              Q2   
+Using model:       2N3904          2N3904   
+LEVEL                   1(*)            1(*)
+AF                 1.000 (*)       1.000 (*)
+BF               326.427         326.427    
+BR               528.632m        528.632m   
+CJC                3.664p          3.664p   
+CJE                4.421p          4.421p   
+CJS                0.000 (*)       0.000 (*)
+EG                 1.110 (*)       1.110 (*)
+FC               500.000m(*)     500.000m(*)
+GAMMA             10.000p(*)      10.000p(*)
+IKF               26.738m         26.738m   
+IKR              980.247         980.247    
+IRB                0.000 (*)       0.000 (*)
+IS                10.018f         10.018f   
+ISC              100.000p        100.000p   
+ISE              999.933f        999.933f   
+ISS                0.000 (*)       0.000 (*)
+ITF               10.103m         10.103m   
+KF                 0.000 (*)       0.000 (*)
+MJC              300.000m        300.000m   
+MJE              423.145m        423.145m   
+MJS                0.000 (*)       0.000 (*)
+NC                 2.000 (*)       2.000 (*)
+NE                 1.723           1.723    
+NF                 1.018           1.018    
+NK               500.000m(*)     500.000m(*)
+NR                 1.000 (*)       1.000 (*)
+NS                 1.000 (*)       1.000 (*)
+PTF                0.000 (*)       0.000 (*)
+QCO                0.000 (*)       0.000 (*)
+QUASIMOD           0.000 (*)       0.000 (*)
+RB                 0.000 (*)       0.000 (*)
+RBM                0.000 (*)       0.000 (*)
+RC                 0.000 (*)       0.000 (*)
+RCO                0.000 (*)       0.000 (*)
+RE                 1.475           1.475    
+T_ABS           UNDEFINED(*)    UNDEFINED(*)
+T_MEASURED      UNDEFINED(*)    UNDEFINED(*)
+T_REL_GLOBAL    UNDEFINED(*)    UNDEFINED(*)
+T_REL_LOCAL     UNDEFINED(*)    UNDEFINED(*)
+TF               477.297p        477.297p   
+TR               595.818n        595.818n   
+TRB1               0.000 (*)       0.000 (*)
+TRB2               0.000 (*)       0.000 (*)
+TRC1               0.000 (*)       0.000 (*)
+TRC2               0.000 (*)       0.000 (*)
+TRE1               0.000 (*)       0.000 (*)
+TRE2               0.000 (*)       0.000 (*)
+TRM1               0.000 (*)       0.000 (*)
+TRM2               0.000 (*)       0.000 (*)
+VAF              101.811         101.811    
+VAR                0.000 (*)       0.000 (*)
+VG                 1.206 (*)       1.206 (*)
+VJC              700.503m        700.503m   
+VJE                1.000           1.000    
+VJS              750.000m(*)     750.000m(*)
+VO                10.000 (*)      10.000 (*)
+VTF               10.000          10.000    
+XCJC               1.000 (*)       1.000 (*)
+XTB                0.000 (*)       0.000 (*)
+XTF              500.027m        500.027m   
+XTI                3.000 (*)       3.000 (*)
+(*) Default Parameter
+
+
+
+Model parameters for devices of type Bipolar Junction Transistors PNP
+=====================================================================
+Instance:              Q3   
+Using model:       2N3906   
+LEVEL                   1(*)
+AF                 1.000 (*)
+BF               205.681    
+BR                 1.820    
+CJC                6.235p   
+CJE                5.991p   
+CJS                0.000 (*)
+EG                 1.110 (*)
+FC               500.001m   
+GAMMA             10.000p(*)
+IKF               90.701m   
+IKR              619.972    
+IRB                0.000 (*)
+IS                 9.935f   
+ISC                6.458p   
+ISE                1.001p   
+ISS                0.000 (*)
+ITF                9.953m   
+KF                 0.000 (*)
+MJC              318.069m   
+MJE              300.000m   
+MJS                0.000 (*)
+NC                 2.000 (*)
+NE                 1.988    
+NF                 1.052    
+NK               500.000m(*)
+NR                 1.000 (*)
+NS                 1.000 (*)
+PTF                0.000 (*)
+QCO                0.000 (*)
+QUASIMOD           0.000 (*)
+RB                 0.000 (*)
+RBM                0.000 (*)
+RC                 0.000 (*)
+RCO                0.000 (*)
+RE               855.895m   
+T_ABS           UNDEFINED(*)
+T_MEASURED      UNDEFINED(*)
+T_REL_GLOBAL    UNDEFINED(*)
+T_REL_LOCAL     UNDEFINED(*)
+TF               566.528p   
+TR               194.557n   
+TRB1               0.000 (*)
+TRB2               0.000 (*)
+TRC1               0.000 (*)
+TRC2               0.000 (*)
+TRE1               0.000 (*)
+TRE2               0.000 (*)
+TRM1               0.000 (*)
+TRM2               0.000 (*)
+VAF               57.367    
+VAR                0.000 (*)
+VG                 1.206 (*)
+VJC              700.104m   
+VJE              705.438m   
+VJS              750.000m(*)
+VO                10.000 (*)
+VTF               10.000    
+XCJC               1.000 (*)
+XTB                0.000 (*)
+XTF              500.002m   
+XTI                3.000 (*)
+(*) Default Parameter
+
+
+
+DC Operating Point Voltages
+===========================
+Node         Voltage  Node         Voltage  Node         Voltage 
+IN            2.500   2             2.500   3             4.921  
+4             2.413   5             1.751   6             5.000  
+7             1.716   8             1.068   OUT           0.000  
+10            2.464  
+
+
+Operating Point for Devices of Type Bipolar Junction Transistors NPN
+====================================================================
+Instance:                 Q1              Q2
+Using model:          2N3904          2N3904
+
+Beta Terms:
+BETADC              153.285         138.848 
+BETAAC              190.197         179.041 
+
+Capacitance Terms:
+CPI                  20.830p         15.280p
+CMU                   2.321p          2.175p
+CBX                   0.000           0.000 
+CJS                   0.000           0.000 
+
+Conductance Terms:
+GM                   29.333m         18.000m
+
+Current Terms:
+IB                    5.180u          3.472u
+IC                  794.065u        482.070u
+
+Resistance Terms:
+RPI                   6.484K          9.947K
+RX                    0.000           0.000 
+RO                  131.373K        218.008K
+
+Voltage Terms:
+VBE                 661.880m        647.789m
+VBC                  -2.508          -3.284 
+VCE                   3.170           3.932 
+
+Frequency Terms:
+FT                201.653MEG      164.128MEG
+
+Power DC Terms:
+PD                    2.521m          1.898m
+PS                    0.000           0.000 
+
+DC Pin Currents:
+Ib                    5.180u          3.472u
+Ic                  794.065u        482.070u
+Ie                 -799.245u       -485.542u
+Is                    0.000           0.000 
+
+Condition:
+State                    LIN             LIN
+
+Device Variables:
+area                  1.000           1.000 
+vbe                   0.000           0.000 
+vce                   0.000           0.000 
+
+
+
+Operating Point for Devices of Type Bipolar Junction Transistors PNP
+====================================================================
+Instance:                 Q3
+Using model:          2N3906
+
+Beta Terms:
+BETADC               -2.618 
+BETAAC               77.666m
+
+Capacitance Terms:
+CPI                   6.210p
+CMU                   3.619p
+CBX                   0.000 
+CJS                   0.000 
+
+Conductance Terms:
+GM                    7.080p
+
+Current Terms:
+IB                   -4.518p
+IC                   11.828p
+
+Resistance Terms:
+RPI                  10.969G
+RX                    0.000 
+RO                  896.776G
+
+Voltage Terms:
+VBE                 -79.407m
+VBC                   3.170 
+VCE                  -3.249 
+
+Frequency Terms:
+FT                  114.649m
+
+Power DC Terms:
+PD                   38.075p
+PS                    0.000 
+
+DC Pin Currents:
+Ib                    4.518p
+Ic                  -11.828p
+Ie                    7.310p
+Is                    0.000 
+
+Condition:
+State                    OFF
+
+Device Variables:
+area                  1.000 
+vbe                   0.000 
+vce                   0.000 
+
+
+
+Operating Point for Devices of Type Resistor
+============================================
+Instance:                  R2              R3              R4              R5
+V                      0.000           1.068          79.407m        -35.615m
+Power DC Terms:
+PD                     0.000         518.653u         63.054u         57.655n
+
+DC Pin Currents:
+Ir                     0.000         485.542u        794.065u         -1.619u
+
+Device Variables:
+tc1                    0.000           0.000           0.000           0.000 
+tc2                    0.000           0.000           0.000           0.000 
+
+
+Instance:                  R6              R7              R8              R9
+V                     35.615m         51.803m         34.719m          1.751 
+Power DC Terms:
+PD                   126.841n        268.358n        120.542n          1.393m
+
+DC Pin Currents:
+Ir                     3.561u          5.180u          3.472u        795.773u
+
+Device Variables:
+tc1                    0.000           0.000           0.000           0.000 
+tc2                    0.000           0.000           0.000           0.000 
+
+
+
+Operating Point for Devices of Type Capacitor
+=============================================
+Instance:                  C2              C3              C4              C5
+V                     -1.068           1.716           2.413        -713.684m
+Power DC Terms:
+PS                     0.000           0.000           0.000           0.000 
+
+DC Pin Currents:
+Ic                     0.000           0.000           0.000           0.000 
+
+Device Variables:
+ic                     0.000           0.000           0.000           0.000 
+
+
+
+Operating Point for Devices of Type SPICE Source
+================================================
+Instance:                 V1              V2              V3
+V                     0.000           5.000           2.500 
+Power DC Terms:
+PG                    0.000           6.381m         12.951u
+
+DC Pin Currents:
+ISource              -3.561u         -1.276m         -5.180u
+
+
+
+*****************************************************
+***                Temperature=27                 ***
+***                   VIN=0.001                   ***
+***                     F=20K                     ***
+***                  RLoad=2200                   ***
+***           Vnoise(RMS)=4.04581e-006            ***
+***              Vnoise=5.72164e-006              ***
+***        Noise Frequency Range=20 to 20K        ***
+*****************************************************
+
+Temperature=27 VIN=0.001 F=20K
+
+Model parameters for devices of type Bipolar Junction Transistors NPN
+=====================================================================
+Instance:              Q1              Q2   
+Using model:       2N3904          2N3904   
+LEVEL                   1(*)            1(*)
+AF                 1.000 (*)       1.000 (*)
+BF               326.427         326.427    
+BR               528.632m        528.632m   
+CJC                3.664p          3.664p   
+CJE                4.421p          4.421p   
+CJS                0.000 (*)       0.000 (*)
+EG                 1.110 (*)       1.110 (*)
+FC               500.000m(*)     500.000m(*)
+GAMMA             10.000p(*)      10.000p(*)
+IKF               26.738m         26.738m   
+IKR              980.247         980.247    
+IRB                0.000 (*)       0.000 (*)
+IS                10.018f         10.018f   
+ISC              100.000p        100.000p   
+ISE              999.933f        999.933f   
+ISS                0.000 (*)       0.000 (*)
+ITF               10.103m         10.103m   
+KF                 0.000 (*)       0.000 (*)
+MJC              300.000m        300.000m   
+MJE              423.145m        423.145m   
+MJS                0.000 (*)       0.000 (*)
+NC                 2.000 (*)       2.000 (*)
+NE                 1.723           1.723    
+NF                 1.018           1.018    
+NK               500.000m(*)     500.000m(*)
+NR                 1.000 (*)       1.000 (*)
+NS                 1.000 (*)       1.000 (*)
+PTF                0.000 (*)       0.000 (*)
+QCO                0.000 (*)       0.000 (*)
+QUASIMOD           0.000 (*)       0.000 (*)
+RB                 0.000 (*)       0.000 (*)
+RBM                0.000 (*)       0.000 (*)
+RC                 0.000 (*)       0.000 (*)
+RCO                0.000 (*)       0.000 (*)
+RE                 1.475           1.475    
+T_ABS           UNDEFINED(*)    UNDEFINED(*)
+T_MEASURED      UNDEFINED(*)    UNDEFINED(*)
+T_REL_GLOBAL    UNDEFINED(*)    UNDEFINED(*)
+T_REL_LOCAL     UNDEFINED(*)    UNDEFINED(*)
+TF               477.297p        477.297p   
+TR               595.818n        595.818n   
+TRB1               0.000 (*)       0.000 (*)
+TRB2               0.000 (*)       0.000 (*)
+TRC1               0.000 (*)       0.000 (*)
+TRC2               0.000 (*)       0.000 (*)
+TRE1               0.000 (*)       0.000 (*)
+TRE2               0.000 (*)       0.000 (*)
+TRM1               0.000 (*)       0.000 (*)
+TRM2               0.000 (*)       0.000 (*)
+VAF              101.811         101.811    
+VAR                0.000 (*)       0.000 (*)
+VG                 1.206 (*)       1.206 (*)
+VJC              700.503m        700.503m   
+VJE                1.000           1.000    
+VJS              750.000m(*)     750.000m(*)
+VO                10.000 (*)      10.000 (*)
+VTF               10.000          10.000    
+XCJC               1.000 (*)       1.000 (*)
+XTB                0.000 (*)       0.000 (*)
+XTF              500.027m        500.027m   
+XTI                3.000 (*)       3.000 (*)
+(*) Default Parameter
+
+
+
+Model parameters for devices of type Bipolar Junction Transistors PNP
+=====================================================================
+Instance:              Q3   
+Using model:       2N3906   
+LEVEL                   1(*)
+AF                 1.000 (*)
+BF               205.681    
+BR                 1.820    
+CJC                6.235p   
+CJE                5.991p   
+CJS                0.000 (*)
+EG                 1.110 (*)
+FC               500.001m   
+GAMMA             10.000p(*)
+IKF               90.701m   
+IKR              619.972    
+IRB                0.000 (*)
+IS                 9.935f   
+ISC                6.458p   
+ISE                1.001p   
+ISS                0.000 (*)
+ITF                9.953m   
+KF                 0.000 (*)
+MJC              318.069m   
+MJE              300.000m   
+MJS                0.000 (*)
+NC                 2.000 (*)
+NE                 1.988    
+NF                 1.052    
+NK               500.000m(*)
+NR                 1.000 (*)
+NS                 1.000 (*)
+PTF                0.000 (*)
+QCO                0.000 (*)
+QUASIMOD           0.000 (*)
+RB                 0.000 (*)
+RBM                0.000 (*)
+RC                 0.000 (*)
+RCO                0.000 (*)
+RE               855.895m   
+T_ABS           UNDEFINED(*)
+T_MEASURED      UNDEFINED(*)
+T_REL_GLOBAL    UNDEFINED(*)
+T_REL_LOCAL     UNDEFINED(*)
+TF               566.528p   
+TR               194.557n   
+TRB1               0.000 (*)
+TRB2               0.000 (*)
+TRC1               0.000 (*)
+TRC2               0.000 (*)
+TRE1               0.000 (*)
+TRE2               0.000 (*)
+TRM1               0.000 (*)
+TRM2               0.000 (*)
+VAF               57.367    
+VAR                0.000 (*)
+VG                 1.206 (*)
+VJC              700.104m   
+VJE              705.438m   
+VJS              750.000m(*)
+VO                10.000 (*)
+VTF               10.000    
+XCJC               1.000 (*)
+XTB                0.000 (*)
+XTF              500.002m   
+XTI                3.000 (*)
+(*) Default Parameter
+
+
+
+DC Operating Point Voltages
+===========================
+Node         Voltage  Node         Voltage  Node         Voltage 
+IN            2.500   2             2.500   3             4.921  
+4             2.413   5             1.751   6             5.000  
+7             1.716   8             1.068   OUT           0.000  
+10            2.464  
+
+
+Operating Point for Devices of Type Bipolar Junction Transistors NPN
+====================================================================
+Instance:                 Q1              Q2
+Using model:          2N3904          2N3904
+
+Beta Terms:
+BETADC              153.285         138.848 
+BETAAC              190.197         179.041 
+
+Capacitance Terms:
+CPI                  20.830p         15.280p
+CMU                   2.321p          2.175p
+CBX                   0.000           0.000 
+CJS                   0.000           0.000 
+
+Conductance Terms:
+GM                   29.333m         18.000m
+
+Current Terms:
+IB                    5.180u          3.472u
+IC                  794.065u        482.070u
+
+Resistance Terms:
+RPI                   6.484K          9.947K
+RX                    0.000           0.000 
+RO                  131.373K        218.008K
+
+Voltage Terms:
+VBE                 661.880m        647.789m
+VBC                  -2.508          -3.284 
+VCE                   3.170           3.932 
+
+Frequency Terms:
+FT                201.653MEG      164.128MEG
+
+Power DC Terms:
+PD                    2.521m          1.898m
+PS                    0.000           0.000 
+
+DC Pin Currents:
+Ib                    5.180u          3.472u
+Ic                  794.065u        482.070u
+Ie                 -799.245u       -485.542u
+Is                    0.000           0.000 
+
+Condition:
+State                    LIN             LIN
+
+Device Variables:
+area                  1.000           1.000 
+vbe                   0.000           0.000 
+vce                   0.000           0.000 
+
+
+
+Operating Point for Devices of Type Bipolar Junction Transistors PNP
+====================================================================
+Instance:                 Q3
+Using model:          2N3906
+
+Beta Terms:
+BETADC               -2.618 
+BETAAC               77.666m
+
+Capacitance Terms:
+CPI                   6.210p
+CMU                   3.619p
+CBX                   0.000 
+CJS                   0.000 
+
+Conductance Terms:
+GM                    7.080p
+
+Current Terms:
+IB                   -4.518p
+IC                   11.828p
+
+Resistance Terms:
+RPI                  10.969G
+RX                    0.000 
+RO                  896.776G
+
+Voltage Terms:
+VBE                 -79.407m
+VBC                   3.170 
+VCE                  -3.249 
+
+Frequency Terms:
+FT                  114.649m
+
+Power DC Terms:
+PD                   38.075p
+PS                    0.000 
+
+DC Pin Currents:
+Ib                    4.518p
+Ic                  -11.828p
+Ie                    7.310p
+Is                    0.000 
+
+Condition:
+State                    OFF
+
+Device Variables:
+area                  1.000 
+vbe                   0.000 
+vce                   0.000 
+
+
+
+Operating Point for Devices of Type Resistor
+============================================
+Instance:                  R2              R3              R4              R5
+V                      0.000           1.068          79.407m        -35.615m
+Power DC Terms:
+PD                     0.000         518.653u         63.054u         57.655n
+
+DC Pin Currents:
+Ir                     0.000         485.542u        794.065u         -1.619u
+
+Device Variables:
+tc1                    0.000           0.000           0.000           0.000 
+tc2                    0.000           0.000           0.000           0.000 
+
+
+Instance:                  R6              R7              R8              R9
+V                     35.615m         51.803m         34.719m          1.751 
+Power DC Terms:
+PD                   126.841n        268.358n        120.542n          1.393m
+
+DC Pin Currents:
+Ir                     3.561u          5.180u          3.472u        795.773u
+
+Device Variables:
+tc1                    0.000           0.000           0.000           0.000 
+tc2                    0.000           0.000           0.000           0.000 
+
+
+
+Operating Point for Devices of Type Capacitor
+=============================================
+Instance:                  C2              C3              C4              C5
+V                     -1.068           1.716           2.413        -713.684m
+Power DC Terms:
+PS                     0.000           0.000           0.000           0.000 
+
+DC Pin Currents:
+Ic                     0.000           0.000           0.000           0.000 
+
+Device Variables:
+ic                     0.000           0.000           0.000           0.000 
+
+
+
+Operating Point for Devices of Type SPICE Source
+================================================
+Instance:                 V1              V2              V3
+V                     0.000           5.000           2.500 
+Power DC Terms:
+PG                    0.000           6.381m         12.951u
+
+DC Pin Currents:
+ISource              -3.561u         -1.276m         -5.180u
+
+
+
+*****************************************************
+***                Temperature=27                 ***
+***                   VIN=0.25                    ***
+***                     F=20K                     ***
+***                  RLoad=2200                   ***
+***           Vnoise(RMS)=4.04581e-006            ***
+***              Vnoise=5.72164e-006              ***
+***        Noise Frequency Range=20 to 20K        ***
+*****************************************************
+
+Temperature=27 VIN=0.25 F=20K
+
+Model parameters for devices of type Bipolar Junction Transistors NPN
+=====================================================================
+Instance:              Q1              Q2   
+Using model:       2N3904          2N3904   
+LEVEL                   1(*)            1(*)
+AF                 1.000 (*)       1.000 (*)
+BF               326.427         326.427    
+BR               528.632m        528.632m   
+CJC                3.664p          3.664p   
+CJE                4.421p          4.421p   
+CJS                0.000 (*)       0.000 (*)
+EG                 1.110 (*)       1.110 (*)
+FC               500.000m(*)     500.000m(*)
+GAMMA             10.000p(*)      10.000p(*)
+IKF               26.738m         26.738m   
+IKR              980.247         980.247    
+IRB                0.000 (*)       0.000 (*)
+IS                10.018f         10.018f   
+ISC              100.000p        100.000p   
+ISE              999.933f        999.933f   
+ISS                0.000 (*)       0.000 (*)
+ITF               10.103m         10.103m   
+KF                 0.000 (*)       0.000 (*)
+MJC              300.000m        300.000m   
+MJE              423.145m        423.145m   
+MJS                0.000 (*)       0.000 (*)
+NC                 2.000 (*)       2.000 (*)
+NE                 1.723           1.723    
+NF                 1.018           1.018    
+NK               500.000m(*)     500.000m(*)
+NR                 1.000 (*)       1.000 (*)
+NS                 1.000 (*)       1.000 (*)
+PTF                0.000 (*)       0.000 (*)
+QCO                0.000 (*)       0.000 (*)
+QUASIMOD           0.000 (*)       0.000 (*)
+RB                 0.000 (*)       0.000 (*)
+RBM                0.000 (*)       0.000 (*)
+RC                 0.000 (*)       0.000 (*)
+RCO                0.000 (*)       0.000 (*)
+RE                 1.475           1.475    
+T_ABS           UNDEFINED(*)    UNDEFINED(*)
+T_MEASURED      UNDEFINED(*)    UNDEFINED(*)
+T_REL_GLOBAL    UNDEFINED(*)    UNDEFINED(*)
+T_REL_LOCAL     UNDEFINED(*)    UNDEFINED(*)
+TF               477.297p        477.297p   
+TR               595.818n        595.818n   
+TRB1               0.000 (*)       0.000 (*)
+TRB2               0.000 (*)       0.000 (*)
+TRC1               0.000 (*)       0.000 (*)
+TRC2               0.000 (*)       0.000 (*)
+TRE1               0.000 (*)       0.000 (*)
+TRE2               0.000 (*)       0.000 (*)
+TRM1               0.000 (*)       0.000 (*)
+TRM2               0.000 (*)       0.000 (*)
+VAF              101.811         101.811    
+VAR                0.000 (*)       0.000 (*)
+VG                 1.206 (*)       1.206 (*)
+VJC              700.503m        700.503m   
+VJE                1.000           1.000    
+VJS              750.000m(*)     750.000m(*)
+VO                10.000 (*)      10.000 (*)
+VTF               10.000          10.000    
+XCJC               1.000 (*)       1.000 (*)
+XTB                0.000 (*)       0.000 (*)
+XTF              500.027m        500.027m   
+XTI                3.000 (*)       3.000 (*)
+(*) Default Parameter
+
+
+
+Model parameters for devices of type Bipolar Junction Transistors PNP
+=====================================================================
+Instance:              Q3   
+Using model:       2N3906   
+LEVEL                   1(*)
+AF                 1.000 (*)
+BF               205.681    
+BR                 1.820    
+CJC                6.235p   
+CJE                5.991p   
+CJS                0.000 (*)
+EG                 1.110 (*)
+FC               500.001m   
+GAMMA             10.000p(*)
+IKF               90.701m   
+IKR              619.972    
+IRB                0.000 (*)
+IS                 9.935f   
+ISC                6.458p   
+ISE                1.001p   
+ISS                0.000 (*)
+ITF                9.953m   
+KF                 0.000 (*)
+MJC              318.069m   
+MJE              300.000m   
+MJS                0.000 (*)
+NC                 2.000 (*)
+NE                 1.988    
+NF                 1.052    
+NK               500.000m(*)
+NR                 1.000 (*)
+NS                 1.000 (*)
+PTF                0.000 (*)
+QCO                0.000 (*)
+QUASIMOD           0.000 (*)
+RB                 0.000 (*)
+RBM                0.000 (*)
+RC                 0.000 (*)
+RCO                0.000 (*)
+RE               855.895m   
+T_ABS           UNDEFINED(*)
+T_MEASURED      UNDEFINED(*)
+T_REL_GLOBAL    UNDEFINED(*)
+T_REL_LOCAL     UNDEFINED(*)
+TF               566.528p   
+TR               194.557n   
+TRB1               0.000 (*)
+TRB2               0.000 (*)
+TRC1               0.000 (*)
+TRC2               0.000 (*)
+TRE1               0.000 (*)
+TRE2               0.000 (*)
+TRM1               0.000 (*)
+TRM2               0.000 (*)
+VAF               57.367    
+VAR                0.000 (*)
+VG                 1.206 (*)
+VJC              700.104m   
+VJE              705.438m   
+VJS              750.000m(*)
+VO                10.000 (*)
+VTF               10.000    
+XCJC               1.000 (*)
+XTB                0.000 (*)
+XTF              500.002m   
+XTI                3.000 (*)
+(*) Default Parameter
+
+
+
+DC Operating Point Voltages
+===========================
+Node         Voltage  Node         Voltage  Node         Voltage 
+IN            2.500   2             2.500   3             4.921  
+4             2.413   5             1.751   6             5.000  
+7             1.716   8             1.068   OUT           0.000  
+10            2.464  
+
+
+Operating Point for Devices of Type Bipolar Junction Transistors NPN
+====================================================================
+Instance:                 Q1              Q2
+Using model:          2N3904          2N3904
+
+Beta Terms:
+BETADC              153.285         138.848 
+BETAAC              190.197         179.041 
+
+Capacitance Terms:
+CPI                  20.830p         15.280p
+CMU                   2.321p          2.175p
+CBX                   0.000           0.000 
+CJS                   0.000           0.000 
+
+Conductance Terms:
+GM                   29.333m         18.000m
+
+Current Terms:
+IB                    5.180u          3.472u
+IC                  794.065u        482.070u
+
+Resistance Terms:
+RPI                   6.484K          9.947K
+RX                    0.000           0.000 
+RO                  131.373K        218.008K
+
+Voltage Terms:
+VBE                 661.880m        647.789m
+VBC                  -2.508          -3.284 
+VCE                   3.170           3.932 
+
+Frequency Terms:
+FT                201.653MEG      164.128MEG
+
+Power DC Terms:
+PD                    2.521m          1.898m
+PS                    0.000           0.000 
+
+DC Pin Currents:
+Ib                    5.180u          3.472u
+Ic                  794.065u        482.070u
+Ie                 -799.245u       -485.542u
+Is                    0.000           0.000 
+
+Condition:
+State                    LIN             LIN
+
+Device Variables:
+area                  1.000           1.000 
+vbe                   0.000           0.000 
+vce                   0.000           0.000 
+
+
+
+Operating Point for Devices of Type Bipolar Junction Transistors PNP
+====================================================================
+Instance:                 Q3
+Using model:          2N3906
+
+Beta Terms:
+BETADC               -2.618 
+BETAAC               77.666m
+
+Capacitance Terms:
+CPI                   6.210p
+CMU                   3.619p
+CBX                   0.000 
+CJS                   0.000 
+
+Conductance Terms:
+GM                    7.080p
+
+Current Terms:
+IB                   -4.518p
+IC                   11.828p
+
+Resistance Terms:
+RPI                  10.969G
+RX                    0.000 
+RO                  896.776G
+
+Voltage Terms:
+VBE                 -79.407m
+VBC                   3.170 
+VCE                  -3.249 
+
+Frequency Terms:
+FT                  114.649m
+
+Power DC Terms:
+PD                   38.075p
+PS                    0.000 
+
+DC Pin Currents:
+Ib                    4.518p
+Ic                  -11.828p
+Ie                    7.310p
+Is                    0.000 
+
+Condition:
+State                    OFF
+
+Device Variables:
+area                  1.000 
+vbe                   0.000 
+vce                   0.000 
+
+
+
+Operating Point for Devices of Type Resistor
+============================================
+Instance:                  R2              R3              R4              R5
+V                      0.000           1.068          79.407m        -35.615m
+Power DC Terms:
+PD                     0.000         518.653u         63.054u         57.655n
+
+DC Pin Currents:
+Ir                     0.000         485.542u        794.065u         -1.619u
+
+Device Variables:
+tc1                    0.000           0.000           0.000           0.000 
+tc2                    0.000           0.000           0.000           0.000 
+
+
+Instance:                  R6              R7              R8              R9
+V                     35.615m         51.803m         34.719m          1.751 
+Power DC Terms:
+PD                   126.841n        268.358n        120.542n          1.393m
+
+DC Pin Currents:
+Ir                     3.561u          5.180u          3.472u        795.773u
+
+Device Variables:
+tc1                    0.000           0.000           0.000           0.000 
+tc2                    0.000           0.000           0.000           0.000 
+
+
+
+Operating Point for Devices of Type Capacitor
+=============================================
+Instance:                  C2              C3              C4              C5
+V                     -1.068           1.716           2.413        -713.684m
+Power DC Terms:
+PS                     0.000           0.000           0.000           0.000 
+
+DC Pin Currents:
+Ic                     0.000           0.000           0.000           0.000 
+
+Device Variables:
+ic                     0.000           0.000           0.000           0.000 
+
+
+
+Operating Point for Devices of Type SPICE Source
+================================================
+Instance:                 V1              V2              V3
+V                     0.000           5.000           2.500 
+Power DC Terms:
+PG                    0.000           6.381m         12.951u
+
+DC Pin Currents:
+ISource              -3.561u         -1.276m         -5.180u
+
+

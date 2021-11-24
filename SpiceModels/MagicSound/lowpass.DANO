@@ -1,0 +1,164 @@
+********************************************************************************
+***                            Micro-Cap 10.0.4.0                            ***
+***                                                                          ***
+***                                                                          ***
+***                          Dynamic AC of lowpass                           ***
+***                           10/4/2017 5:43:39 PM                           ***
+********************************************************************************
+
+*****************************************************
+***                Temperature=27                 ***
+*****************************************************
+
+Temperature=27 
+
+AC Voltages at Frequency=1e+006 (Mag, Degrees)
+==============================================
+Node               Voltage  Node               Voltage 
+1            3.541m,-4.454  2        132.648u,-121.068 
+3            1.206m,-9.671  4                      0,0 
+5           40.564u,-97.65  6          38.565u,-97.635 
+OUT        38.565u,-97.635  8           4.303m,-72.504 
+9                      0,0  10       370.947m,-13.167m 
+11         1.892,-737.704u  12                   2.5,0 
+
+
+AC values for Bipolar Junction Transistors NPN (Mag, Degrees)
+=============================================================
+Instance:                         Q1                      Q2
+Using model:                  2N3904                  2N3904
+
+Power AC Terms:
+PG                     84.837n,2.243         1.353p,303.019m
+PD                    2.137n,-0.005f          9.032f,-0.039f
+PS                      380.198p,-90             22.852f,-90
+
+AC Pin Currents:
+Ib                 280.172n,-135.351         765.46p,-22.537
+Ic                   35.407u,175.856          34.87n,-98.851
+Ie                    35.592u,-3.805          35.059n,82.365
+Is                               0,0                     0,0
+
+Device Variables:
+area                          1.000                   1.000 
+vbe                           0.000                   0.000 
+vce                           0.000                   0.000 
+
+
+
+AC values for Bipolar Junction Transistors PNP (Mag, Degrees)
+=============================================================
+Instance:                         Q3
+Using model:                  2N3906
+
+Power AC Terms:
+PG                      0.03f,174.78
+PD               17.482f,-1.578E-019
+PS                       613.95p,-90
+
+AC Pin Currents:
+Ib                   191.375n,86.291
+Ic                   53.268n,-91.771
+Ie                  138.149n,-94.456
+Is                               0,0
+
+Device Variables:
+area                          1.000 
+vbe                           0.000 
+vce                           0.000 
+
+
+
+AC values for Resistor (Mag, Degrees)
+=====================================
+Instance:                           R                     R62                     R46
+
+Power AC Terms:
+PD                         676.013f,0          676.013f,1.07f               125.38n,0
+
+AC Pin Currents:
+Ir                    17.529n,-97.635         17.529n,-97.635         35.409u,175.546
+
+Device Variables:
+tc1                            0.000                   0.000                   0.000 
+tc2                            0.000                   0.000                   0.000 
+
+
+Instance:                         R42                     R40                     R44
+
+Power AC Terms:
+PD                          841.67p,0               13.666u,0                1.778n,0
+
+AC Pin Currents:
+Ir                   195.596n,-72.504        36.967u,622.884m         421.65n,-71.153
+
+Device Variables:
+tc1                            0.000                   0.000                   0.000 
+tc2                            0.000                   0.000                   0.000 
+
+
+Instance:                         R60                     R48                    R100
+
+Power AC Terms:
+PD                         145.271p,0              661.145p,0       2.313m,3.279E-019
+
+AC Pin Currents:
+Ir                    120.529n,-7.743         548.197n,-9.671         1.521m,-179.998
+
+Device Variables:
+tc1                            0.000                   0.000                   0.000 
+tc2                            0.000                   0.000                   0.000 
+
+
+Instance:                        R101                    R102
+
+Power AC Terms:
+PD                         550.406u,0    925.075u,-4.099E-019
+
+AC Pin Currents:
+Ir                     1.484m,179.987         1.521m,-179.998
+
+Device Variables:
+tc1                            0.000                   0.000 
+tc2                            0.000                   0.000 
+
+
+
+AC values for Capacitor (Mag, Degrees)
+======================================
+Instance:                         C18                     C16                     C10
+
+Power AC Terms:
+PS                     4.890E-019,-90              4.859p,-90             51.961p,-90
+
+AC Pin Currents:
+Ic                     17.529n,82.365          119.789n,-7.65        391.724n,-31.068
+
+Device Variables:
+ic                             0.000                   0.000                   0.000 
+
+
+Instance:                         C12                     C14
+
+Power AC Terms:
+PS                       143.561n,-90              4.295n,-90
+
+AC Pin Currents:
+Ic                   36.784u,-178.462           3.562u,80.329
+
+Device Variables:
+ic                             0.000                   0.000 
+
+
+
+AC values for SPICE Source (Mag, Degrees)
+=========================================
+Instance:                         V2                      V3                      V1
+
+Power AC Terms:
+PG                               0,0                     0,0          3.802m,-2.294m
+
+AC Pin Currents:
+ISource               35.412u,-4.174        36.911u,-179.087         1.521m,-179.998
+
+
